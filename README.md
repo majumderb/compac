@@ -1,4 +1,4 @@
-# persona-dialog
+# Persona Expansion with Common Sense in Dialog
 Personalized Dialog Generation
 
 # Data
