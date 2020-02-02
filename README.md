@@ -27,6 +27,7 @@ python scripts/data/make_conceptnet_data_loader.pypython scripts/data/make_atomi
 ```
 
 Pretrined models can be downloaded from here: `https://drive.google.com/open?id=1FccEsYPUHnjzmX-Y5vjCBeyRt1pLo8FB`
+
 Unzip the file: `tar -xvzf pretrained_models.tar.gz`
 
 ## Interactive Mode
@@ -46,3 +47,4 @@ greedy
 beam-# where # is the beam size
 topk-# where # is k
 ```
+We will change this code to be able take an input json and produce an output json with all expansions.
