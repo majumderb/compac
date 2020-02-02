@@ -32,6 +32,7 @@ Unzip the file: `tar -xvzf pretrained_models.tar.gz`
 ## Interactive Mode
 
 Play with COMeT completions here: `python scripts/interactive/atomic_single_example.py --model_file pretrained_models/atomic_pretrained_model.pickle`
+
 Choose `all` as `effect type`. Other options as follow:
 ```
 all - compute the output for all effect types {{oEffect, oReact, oWant, xAttr, xEffect, xIntent, xNeed, xReact, xWant}}
