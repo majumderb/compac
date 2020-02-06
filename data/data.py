@@ -26,8 +26,8 @@ class PersonaChat():
         print('PERSONA {}\n{}'.format(
             '='*33, '\n'.join(persona))
         )
-        print('CONVERSATION {}\n{}'.format(
-            '='*33, '\n-'.join(conversation))
+        print('CONVERSATION {}\n- {}'.format(
+            '='*33, '\n- '.join(conversation))
         )
 
 if __name__ == "__main__":
