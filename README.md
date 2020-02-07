@@ -3,7 +3,11 @@ Personalized Dialog Generation
 
 # Data
 
-Personachat Download:
+Huggingface cleaned dataset
+
+`wget https://s3.amazonaws.com/datasets.huggingface.co/personachat/personachat_self_original.json`
+
+(Optional) Personachat Download:
 http://parl.ai/downloads/personachat/personachat.tgz
 
 # COMeT predictions
