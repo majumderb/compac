@@ -3,9 +3,22 @@
 
 
 DATA_FILE = '../../data/personachat_self_original.json'
-# DUMP_FILE = '../../data/personachat_self_original_comet.json'
+
+val_only = False
 DUMP_FILE = '../../data/personachat_self_original_comet_validation.json'
-# python persona_explorations_annotations.py > persona_explorations_annotations_lo
+
+
+if val_only
+    ### -- running  with validation split only
+    DUMP_FILE = '../../data/personachat_self_original_comet_validation.json'
+    # python persona_explorations_annotations.py > persona_explorations_annotations_log_valonly
+else:
+    ###  -- running with entire data
+    DUMP_FILE = '../../data/personachat_self_original_comet.json'
+    #python persona_explorations_annotations.py > persona_explorations_annotations_lo
+
+
+
 print("DUMP_FILE = ", DUMP_FILE)
 
 import os
@@ -163,5 +176,5 @@ print( fnc(persona_sample) )
 
 
 
-solver.process_all(DUMP_FILE, debug=False, val_only=True)
+solver.process_all(DUMP_FILE, debug=False, val_only=val_only)
 
