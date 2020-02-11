@@ -3,9 +3,10 @@
 
 
 DATA_FILE = '../../data/personachat_self_original.json'
-DUMP_FILE = '../../data/personachat_self_original_comet.json'
+# DUMP_FILE = '../../data/personachat_self_original_comet.json'
+DUMP_FILE = '../../data/personachat_self_original_comet_validation.json'
 # python persona_explorations_annotations.py > persona_explorations_annotations_lo
-
+print("DUMP_FILE = ", DUMP_FILE)
 
 import os
 import sys
@@ -128,16 +129,28 @@ class AnnotatePersonaChat():
         return persona
 
         
-    def process_all(self, dump_fname, debug=False):
+    def process_all(self, dump_fname, debug=False, val_only=False):
         self.annotated_data = {}
         for split,data in self.data.items():
+            if val_only and split=='train':
+                continue
             annotated_data = []
-            for row in data:
-                row['coment_annotation'] = fnc(row['personality'])
-                annotated_data.append(row)
+            miss_cnt = 0
+            print("******* split =",split, " || data: ", len(data) )
+            
+            for j,row in enumerate(data):
+                try:
+                    row['coment_annotation'] = fnc(row['personality'])
+                    annotated_data.append(row)
+                except:
+                    miss_cnt += 1
+                    continue
                 if debug:
                     break
+                print("******* split =",split, " j = ", j )
+                    
             self.annotated_data[split] = annotated_data
+            print("******* split =",split, " || annotated_data: ", len(annotated_data), " || miss_cnt=",miss_cnt )
         json.dump(self.annotated_data, open(dump_fname,'w'))
 
 
@@ -150,5 +163,5 @@ print( fnc(persona_sample) )
 
 
 
-solver.process_all(DUMP_FILE, debug=False)
+solver.process_all(DUMP_FILE, debug=False, val_only=True)
 
