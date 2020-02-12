@@ -8,18 +8,16 @@ import socket
 
 import torch
 
-from pytorch_transformers import cached_path
+from transformers import cached_path
 
 PERSONACHAT_URL = "https://s3.amazonaws.com/datasets.huggingface.co/personachat/personachat_self_original.json"
 HF_FINETUNED_MODEL = "https://s3.amazonaws.com/models.huggingface.co/transfer-learning-chatbot/gpt_personachat_cache.tar.gz"
-
-logger = logging.getLogger(__file__)
 
 def download_pretrained_model():
     """ Download and extract finetuned model from S3 """
     resolved_archive_file = cached_path(HF_FINETUNED_MODEL)
     tempdir = tempfile.mkdtemp()
-    logger.info("extracting archive file {} to temp dir {}".format(resolved_archive_file, tempdir))
+    print("extracting archive file {} to temp dir {}".format(resolved_archive_file, tempdir))
     with tarfile.open(resolved_archive_file, 'r:gz') as archive:
         archive.extractall(tempdir)
     return tempdir
@@ -30,15 +28,15 @@ def get_dataset(tokenizer, dataset_path, dataset_cache):
     dataset_path = dataset_path or PERSONACHAT_URL
     dataset_cache = dataset_cache + '_' + type(tokenizer).__name__  # To avoid using GPT cache for GPT-2 and vice-versa
     if dataset_cache and os.path.isfile(dataset_cache):
-        logger.info("Load tokenized dataset from cache at %s", dataset_cache)
+        print("Load tokenized dataset from cache at {}".format(dataset_cache))
         dataset = torch.load(dataset_cache)
     else:
-        logger.info("Download dataset from %s", dataset_path)
+        print("Download dataset from {}".format(dataset_path))
         personachat_file = cached_path(dataset_path)
         with open(personachat_file, "r", encoding="utf-8") as f:
             dataset = json.loads(f.read())
 
-        logger.info("Tokenize and encode the dataset")
+        print("Tokenize and encode the dataset")
         def tokenize(obj):
             if isinstance(obj, str):
                 return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj))
