@@ -201,6 +201,7 @@ def get_conceptnet_sequence(e1, model, sampler, data_loader, text_encoder, relat
                 data_loader.max_e2)
 
         sequence_all['beams'] = sampling_result["beams"]
+        sequence_all['beam_losses'] = sampling_result["beam_losses"]
 
         print_conceptnet_sequence(sequence_all)
 
@@ -239,8 +240,9 @@ def print_conceptnet_sequence(sequence_object):
     print("Target Relation: {}".format(relation))
     print("")
     print("Candidate Sequences:")
-    for beam in sequence_object["beams"]:
+    for beam, loss in zip(sequence_object["beams"], sequence_object["beam_losses"]):
         print(beam)
+        print('Loss: {}'.format(loss))
     print("")
     print("====================================================")
     print("")
