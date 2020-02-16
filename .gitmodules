@@ -1,0 +1,3 @@
+[submodule "comet/comet_commonsense"]
+	path = comet/comet_commonsense
+	url = https://github.com/atcbosselut/comet-commonsense.git
