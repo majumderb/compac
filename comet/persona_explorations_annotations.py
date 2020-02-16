@@ -29,8 +29,8 @@ import torch
 sys.path.append(os.getcwd())
 
 # import src.data.data as data
-import src.data.config as cfg
-import src.interactive.functions as interactive
+import comet_commonsense.src.data.config as cfg
+import comet_commonsense.src.interactive.functions as interactive
 
 
 # In[9]:
