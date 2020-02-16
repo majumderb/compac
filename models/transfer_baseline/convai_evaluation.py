@@ -16,9 +16,9 @@ from projects.convai2.build_dict import build_dict
 from pytorch_transformers import (OpenAIGPTDoubleHeadsModel, OpenAIGPTLMHeadModel, OpenAIGPTTokenizer,
                                   GPT2DoubleHeadsModel, GPT2LMHeadModel, GPT2Tokenizer)
 
-from .transfer_baseline.train import build_input_from_segments, pad_dataset, SPECIAL_TOKENS, add_special_tokens_
-from .transfer_baseline.utils import download_pretrained_model, AttrDict
-# from interact import sample_sequence
+from train import build_input_from_segments, pad_dataset, SPECIAL_TOKENS, add_special_tokens_
+from utils import download_pretrained_model, AttrDict
+from interact import sample_sequence
 
 class TransformerAgent(Agent):
     @staticmethod
