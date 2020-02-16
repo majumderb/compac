@@ -123,6 +123,7 @@ def get_atomic_sequence(input_event, model, sampler, data_loader, text_encoder, 
                 data.atomic_data.num_delimiter_tokens["category"])
 
         sequence_all['beams'] = sampling_result["beams"]
+        sequence_all['beam_losses'] = sampling_result["beam_losses"]
 
         print_atomic_sequence(sequence_all)
 
@@ -137,8 +138,9 @@ def print_atomic_sequence(sequence_object):
     print("Target Effect: {}".format(category))
     print("")
     print("Candidate Sequences:")
-    for beam in sequence_object["beams"]:
+    for beam, loss in zip(sequence_object["beams"], sequence_object["beam_losses"]):
         print(beam)
+        print('Loss: {}'.format(loss))
     print("")
     print("====================================================")
     print("")
