@@ -60,3 +60,13 @@ def make_logdir(model_name: str):
     logdir = os.path.join(
         'runs', current_time + '_' + socket.gethostname() + '_' + model_name)
     return logdir
+
+
+"""
+def tokenize(obj):
+    if isinstance(obj, str):
+        return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj))
+    if isinstance(obj, dict):
+        return dict((n, tokenize(o)) for n, o in obj.items())
+    return list(tokenize(o) for o in obj)
+"""
