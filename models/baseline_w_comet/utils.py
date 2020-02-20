@@ -22,21 +22,20 @@ def download_pretrained_model():
         archive.extractall(tempdir)
     return tempdir
 
-
 def get_dataset(tokenizer, dataset_path, dataset_cache):
     """ Get tokenized PERSONACHAT dataset from S3 or cache."""
-    dataset_path = dataset_path or PERSONACHAT_URL
-    dataset_cache = dataset_cache + '_' + type(tokenizer).__name__  # To avoid using GPT cache for GPT-2 and vice-versa
+    dataset_path = dataset_path
+    dataset_dir = os.path.dirname(os.path.realpath(dataset_path))
+    dataset_cache = os.path.join(dataset_dir, dataset_cache + '_cache_' + type(tokenizer).__name__)
     if dataset_cache and os.path.isfile(dataset_cache):
         print("Load tokenized dataset from cache at {}".format(dataset_cache))
         dataset = torch.load(dataset_cache)
     else:
-        print("Download dataset from {}".format(dataset_path))
-        personachat_file = cached_path(dataset_path)
-        with open(personachat_file, "r", encoding="utf-8") as f:
+        print("Loading dataset from {}".format(dataset_path))
+        with open(dataset_path, "r+", encoding="utf-8") as f:
             dataset = json.loads(f.read())
-
         print("Tokenize and encode the dataset")
+        start = datetime.now()
         def tokenize(obj):
             if isinstance(obj, str):
                 return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj))
@@ -45,8 +44,8 @@ def get_dataset(tokenizer, dataset_path, dataset_cache):
             return list(tokenize(o) for o in obj)
         dataset = tokenize(dataset)
         torch.save(dataset, dataset_cache)
+        print('{} - Cached dataset at {}'.format(datetime.now() - start, dataset_cache))
     return dataset
-
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):

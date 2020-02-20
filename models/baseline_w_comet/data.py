@@ -47,6 +47,12 @@ def get_data_loaders(args, tokenizer):
             num_candidates = min(args.num_candidates, num_candidates)
         for dialog in dataset:
             persona = dialog["personality"].copy()
+            comet_annotations = dialog["coment_annotation"]
+            for sent in comet_annotations:
+                sent_beams = []
+                for effect in sent['comet'].items():
+                    sent_beams += effect[1]['beams']
+            persona += sent_beams
             for _ in range(args.personality_permutations):
                 for utterance in dialog["utterances"]:
                     history = utterance["history"][-(2*args.max_history+1):]
