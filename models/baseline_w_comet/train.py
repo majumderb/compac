@@ -155,13 +155,6 @@ def train():
             return (lm_logits_flat_shifted, mc_logits), (lm_labels_flat_shifted, mc_labels)
     evaluator = Engine(inference)
 
-    # Attach evaluation to trainer: we evaluate when we start the training and at the end of each epoch
-    trainer.add_event_handler(Events.EPOCH_COMPLETED, lambda _: evaluator.run(val_loader))
-    if args.n_epochs < 1:
-        trainer.add_event_handler(Events.COMPLETED, lambda _: evaluator.run(val_loader))
-    if args.eval_before_start:
-        trainer.add_event_handler(Events.STARTED, lambda _: evaluator.run(val_loader))
-
     # Make sure distributed data samplers split the dataset nicely between the distributed processes
     if args.distributed:
         trainer.add_event_handler(Events.EPOCH_STARTED, lambda engine: train_sampler.set_epoch(engine.state.epoch))
@@ -182,6 +175,9 @@ def train():
         metric.attach(evaluator, name)
 
     # On the main process: add progress bar, tensorboard, checkpoints and save model, configuration and tokenizer before we start to train
+    def print_epoch(engine):
+        print("Epoch: {}".format(engine.state.epoch))
+
     if args.local_rank in [-1, 0]:
         pbar = ProgressBar(persist=True)
         pbar.attach(trainer, metric_names=["loss"])
@@ -191,19 +187,26 @@ def train():
         print("Logging at log dir: {}".format(log_dir))
 
         # tb stuff
-        tb_logger = TensorboardLogger(log_dir)
-        tb_logger.attach(trainer, log_handler=OutputHandler(tag="training", metric_names=["loss"]), event_name=Events.ITERATION_COMPLETED)
-        tb_logger.attach(trainer, log_handler=OptimizerParamsHandler(optimizer), event_name=Events.ITERATION_STARTED)
-        tb_logger.attach(evaluator, log_handler=OutputHandler(tag="validation", metric_names=list(metrics.keys()), another_engine=trainer), event_name=Events.EPOCH_COMPLETED)
+        # tb_logger = TensorboardLogger(log_dir)
+        # tb_logger.attach(trainer, log_handler=OutputHandler(tag="training", metric_names=["loss"]), event_name=Events.ITERATION_COMPLETED)
+        # tb_logger.attach(trainer, log_handler=OptimizerParamsHandler(optimizer), event_name=Events.ITERATION_STARTED)
+        # tb_logger.attach(evaluator, log_handler=OutputHandler(tag="validation", metric_names=list(metrics.keys()), another_engine=trainer), event_name=Events.EPOCH_COMPLETED)
 
         # save model checkpoints
         checkpoint_handler = ModelCheckpoint(log_dir, 'checkpoint', save_interval=1, n_saved=3)
-        trainer.add_event_handler(Events.EPOCH_COMPLETED, print('Saving Model.'))
+        trainer.add_event_handler(Events.EPOCH_COMPLETED, print_epoch)
         trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {'mymodel': getattr(model, 'module', model)})  # "getattr" takes care of distributed encapsulation
 
         torch.save(args, log_dir + '/model_training_args.bin')
         getattr(model, 'module', model).config.to_json_file(os.path.join(log_dir, CONFIG_NAME))
         tokenizer.save_pretrained(log_dir)
+
+        # Attach evaluation to trainer: we evaluate when we start the training and at the end of each epoch
+        # trainer.add_event_handler(Events.EPOCH_COMPLETED, lambda _: evaluator.run(val_loader))
+        # if args.n_epochs < 1:
+        #     trainer.add_event_handler(Events.COMPLETED, lambda _: evaluator.run(val_loader))
+        # if args.eval_before_start:
+        #     trainer.add_event_handler(Events.STARTED, lambda _: evaluator.run(val_loader))
 
     # Run the training
     trainer.run(train_loader, max_epochs=args.n_epochs)
@@ -211,7 +214,7 @@ def train():
     # On the main process: close tensorboard logger and rename the last checkpoint (for easy re-loading with OpenAIGPTModel.from_pretrained method)
     if args.local_rank in [-1, 0] and args.n_epochs > 0:
         os.rename(os.path.join(log_dir, checkpoint_handler._saved[-1][1]), os.path.join(log_dir, WEIGHTS_NAME))  # TODO: PR in ignite to have better access to saved file paths (cleaner)
-        tb_logger.close()
+        # tb_logger.close()
 
 if __name__ == "__main__":
     train()
