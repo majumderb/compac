@@ -175,8 +175,11 @@ def train():
         metric.attach(evaluator, name)
 
     # On the main process: add progress bar, tensorboard, checkpoints and save model, configuration and tokenizer before we start to train
-    def print_epoch(engine):
-        print("Epoch: {}".format(engine.state.epoch))
+    def print_model_save(engine):
+        print("Training complete. Saving Model.")
+    
+    def print_validation(engine):
+        print("Model saved. Starting validation.")
 
     if args.local_rank in [-1, 0]:
         pbar = ProgressBar(persist=True)
@@ -194,7 +197,7 @@ def train():
 
         # save model checkpoints
         checkpoint_handler = ModelCheckpoint(log_dir, 'checkpoint', save_interval=1, n_saved=3)
-        trainer.add_event_handler(Events.EPOCH_COMPLETED, print_epoch)
+        trainer.add_event_handler(Events.EPOCH_COMPLETED, print_model_save)
         trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {'mymodel': getattr(model, 'module', model)})  # "getattr" takes care of distributed encapsulation
 
         torch.save(args, log_dir + '/model_training_args.bin')
@@ -202,11 +205,12 @@ def train():
         tokenizer.save_pretrained(log_dir)
 
         # Attach evaluation to trainer: we evaluate when we start the training and at the end of each epoch
-        # trainer.add_event_handler(Events.EPOCH_COMPLETED, lambda _: evaluator.run(val_loader))
-        # if args.n_epochs < 1:
-        #     trainer.add_event_handler(Events.COMPLETED, lambda _: evaluator.run(val_loader))
-        # if args.eval_before_start:
-        #     trainer.add_event_handler(Events.STARTED, lambda _: evaluator.run(val_loader))
+        trainer.add_event_handler(Events.EPOCH_COMPLETED, print_validation)
+        trainer.add_event_handler(Events.EPOCH_COMPLETED, lambda _: evaluator.run(val_loader))
+        if args.n_epochs < 1:
+            trainer.add_event_handler(Events.COMPLETED, lambda _: evaluator.run(val_loader))
+        if args.eval_before_start:
+            trainer.add_event_handler(Events.STARTED, lambda _: evaluator.run(val_loader))
 
     # Run the training
     trainer.run(train_loader, max_epochs=args.n_epochs)
