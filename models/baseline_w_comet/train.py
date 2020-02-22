@@ -19,12 +19,7 @@ from transformers import (AdamW, OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer,
 
 from utils import get_dataset, make_logdir
 from data import get_data_loaders
-
-SPECIAL_TOKENS = ["<bos>", "<eos>", "<speaker1>", "<speaker2>", "<pad>"]
-ATTR_TO_SPECIAL_TOKEN = {'bos_token': '<bos>', 'eos_token': '<eos>', 'pad_token': '<pad>',
-                         'additional_special_tokens': ('<speaker1>', '<speaker2>')}
-MODEL_INPUTS = ["input_ids", "mc_token_ids", "lm_labels", "mc_labels", "token_type_ids"]
-PADDED_INPUTS = ["input_ids", "lm_labels", "token_type_ids"]
+from data import PADDED_INPUTS, ATTR_TO_SPECIAL_TOKEN
 
 def average_distributed_scalar(scalar, args):
     """ Average a scalar over the nodes if we are in distributed training. We use this for distributed evaluation. """
@@ -83,6 +78,8 @@ def train():
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", help="Device (cuda or cpu)")
     parser.add_argument("--fp16", type=str, default="", help="Set to O0, O1, O2 or O3 for fp16 training (see apex documentation)")
     parser.add_argument("--local_rank", type=int, default=-1, help="Local rank for distributed training (-1: not distributed)")
+    parser.add_argument("--test_run_num", type=int, default=-1, help="Datapoints to run with in a test run")
+    parser.add_argument("--exp_name", type=str, default="", required=True, help="Provide an experiment name")
     args = parser.parse_args()
 
     # logging is set to INFO (resp. WARN) for main (resp. auxiliary) process. logger.info => log main process only, logger.warning => log all processes
@@ -190,13 +187,16 @@ def train():
         pbar.attach(trainer, metric_names=["loss"])
         evaluator.add_event_handler(Events.COMPLETED, lambda _: pbar.log_message("Validation: %s" % pformat(evaluator.state.metrics)))
 
-        log_dir = make_logdir(args.model_checkpoint)
-        tb_logger = TensorboardLogger(log_dir)
+        log_dir = make_logdir(args.model_checkpoint, args.exp_name)
+        print("Logging at log dir: {}".format(log_dir))
 
+        # tb stuff
+        tb_logger = TensorboardLogger(log_dir)
         tb_logger.attach(trainer, log_handler=OutputHandler(tag="training", metric_names=["loss"]), event_name=Events.ITERATION_COMPLETED)
         tb_logger.attach(trainer, log_handler=OptimizerParamsHandler(optimizer), event_name=Events.ITERATION_STARTED)
         tb_logger.attach(evaluator, log_handler=OutputHandler(tag="validation", metric_names=list(metrics.keys()), another_engine=trainer), event_name=Events.EPOCH_COMPLETED)
 
+        # save model checkpoints
         checkpoint_handler = ModelCheckpoint(log_dir, 'checkpoint', save_interval=1, n_saved=3)
         trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {'mymodel': getattr(model, 'module', model)})  # "getattr" takes care of distributed encapsulation
 

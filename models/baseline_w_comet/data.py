@@ -45,6 +45,10 @@ def get_data_loaders(args, tokenizer):
         num_candidates = len(dataset[0]["utterances"][0]["candidates"])
         if args.num_candidates > 0 and dataset_name == 'train':
             num_candidates = min(args.num_candidates, num_candidates)
+        
+        if args.test_run_num > 0:
+            dataset = dataset[:args.test_run_num]
+
         for dialog in dataset:
             persona = dialog["personality"].copy()
             comet_annotations = dialog["coment_annotation"]
