@@ -78,6 +78,7 @@ def train():
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", help="Device (cuda or cpu)")
     parser.add_argument("--fp16", type=str, default="", help="Set to O0, O1, O2 or O3 for fp16 training (see apex documentation)")
     parser.add_argument("--local_rank", type=int, default=-1, help="Local rank for distributed training (-1: not distributed)")
+    parser.add_argument("--comet_greedy", action='store_true', help="Use top-most comet expansion")
     parser.add_argument("--test_run_num", type=int, default=-1, help="Datapoints to run with in a test run")
     parser.add_argument("--exp_name", type=str, default="", required=True, help="Provide an experiment name")
     args = parser.parse_args()
