@@ -57,8 +57,8 @@ def get_data_loaders(args, tokenizer):
                 for effect in sent['comet'].items():
                     # not sure is ' .' should be added or '.'
                     # tokenizer realize different tokens for each of the above options
-                    beams = [x+' .' for x in effect[1]['beams']]
-                    sent_beams += beams
+                    # beams = [x+' .' for x in effect[1]['beams']]
+                    sent_beams += effect[1]['beams']
             persona += sent_beams
             for _ in range(args.personality_permutations):
                 for utterance in dialog["utterances"]:
