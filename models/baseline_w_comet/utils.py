@@ -58,7 +58,7 @@ def make_logdir(model_name: str, exp_name: str):
     # Code copied from ignite repo
     current_time = datetime.now().strftime('%b%d_%H-%M-%S')
     logdir = os.path.join(
-        'runs', current_time + '_' + socket.gethostname() + '_' + model_name)
+        'runs', current_time + '_' + socket.gethostname() + '_' + model_name + exp_name)
     return logdir
 
 
