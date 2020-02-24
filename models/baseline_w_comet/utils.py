@@ -16,7 +16,7 @@ HF_FINETUNED_MODEL = "https://s3.amazonaws.com/models.huggingface.co/transfer-le
 
 def preprocess(effect_type, beam):
     if effect_type == 'xAttr':
-        beam = 'I am ' + beam
+        beam = 'i am ' + beam
     elif effect_type == 'xEffect':
         if 'personx' not in beam:
             beam = 'i ' + beam
