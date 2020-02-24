@@ -104,6 +104,7 @@ def run():
     parser.add_argument("--temperature", type=int, default=0.7, help="Sampling softmax temperature")
     parser.add_argument("--top_k", type=int, default=0, help="Filter top-k tokens before sampling (<=0: no filtering)")
     parser.add_argument("--top_p", type=float, default=0.9, help="Nucleus filtering (top-p) before sampling (<=0.0: no filtering)")
+    parser.add_argument("--comet_greedy", action='store_true', help="Use top-most comet expansion")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO)
@@ -132,8 +133,23 @@ def run():
 
     logger.info("Sample a personality")
     dataset = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
-    personalities = [dialog["personality"] for dataset in dataset.values() for dialog in dataset]
-    personality = random.choice(personalities)
+    # personalities = [dialog["personality"] for dataset in dataset.values() for dialog in dataset]
+    dialogs = [dialog for dataset in dataset.values() for dialog in dataset]
+    dialog =  random.choice(dialogs)
+    # personality = random.choice(personalities)
+    personality = dialog['personality']
+    comet_annotations = dialog["coment_annotation"]
+    for sent in comet_annotations:
+        sent_beams = []
+        for effect in sent['comet'].items():
+            # not sure is ' .' should be added or '.'
+            # tokenizer realize different tokens for each of the above options
+            # beams = [x+' .' for x in effect[1]['beams']]
+            if args.comet_greedy:
+                sent_beams += [effect[1]['beams'][0]]
+            else:
+                sent_beams += effect[1]['beams']
+    personality += sent_beams
     print(personality)
     logger.info("Selected personality: %s", tokenizer.decode(chain(*personality)))
 
