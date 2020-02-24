@@ -83,10 +83,14 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
 
     return current_output
 
+'''
+python interact.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet.json --model gpt2 --model_checkpoint runs/Feb22_13-26-13_deepyeti_gpt2concat_comet/
+'''
+
 def run():
     parser = ArgumentParser()
     parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
-    parser.add_argument("--dataset_cache", type=str, default='./dataset_cache', help="Path or url of the dataset cache")
+    parser.add_argument("--dataset_cache", type=str, default='persona_comet', help="Path or url of the dataset cache")
     parser.add_argument("--model", type=str, default="openai-gpt", help="Model type (openai-gpt or gpt2)", choices=['openai-gpt', 'gpt2'])  # anything besides gpt2 will load openai-gpt
     parser.add_argument("--model_checkpoint", type=str, default="", help="Path, url or short name of the model")
     parser.add_argument("--max_history", type=int, default=2, help="Number of previous utterances to keep in history")
