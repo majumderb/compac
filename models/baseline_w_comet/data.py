@@ -59,9 +59,6 @@ def get_data_loaders(args, tokenizer):
             for sent in comet_annotations:
                 sent_beams = []
                 for effect in sent['comet'].items():
-                    # not sure is ' .' should be added or '.'
-                    # tokenizer realize different tokens for each of the above options
-                    # beams = [x+' .' for x in effect[1]['beams']]
                     if args.comet_greedy:
                         sent_beams += [effect[1]['beams'][0]]
                     else:
