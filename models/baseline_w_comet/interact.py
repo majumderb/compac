@@ -10,7 +10,7 @@ import torch.nn.functional as F
 
 from pytorch_transformers import OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, GPT2LMHeadModel, GPT2Tokenizer
 from train import add_special_tokens_
-from data import SPECIAL_TOKENS, build_input_from_segments,
+from data import SPECIAL_TOKENS, build_input_from_segments
 from utils import get_dataset, download_pretrained_model
 
 def top_filtering(logits, top_k=0., top_p=0.9, threshold=-float('Inf'), filter_value=-float('Inf')):
