@@ -128,7 +128,7 @@ if __name__ == "__main__":
     save_filename = orig_filename[:-5] + '_preprocessed.json'
 
 
-    with open('save_filename', 'w') as outfile:
+    with open(os.path.join(save_dir, save_filename), 'w') as outfile:
         json.dump(dataset, outfile)
     
     print('File saved.')
