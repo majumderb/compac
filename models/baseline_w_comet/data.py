@@ -1,10 +1,14 @@
 from collections import defaultdict
 from itertools import chain
+from argparse import ArgumentParser
 
 from torch.utils.data import DataLoader, TensorDataset
-from utils import get_dataset, make_logdir
+from utils import get_dataset, make_logdir, preprocess
+from datetime import datetime
 
 import torch
+import json
+import os
 
 SPECIAL_TOKENS = ["<bos>", "<eos>", "<speaker1>", "<speaker2>", "<pad>"]
 ATTR_TO_SPECIAL_TOKEN = {'bos_token': '<bos>', 'eos_token': '<eos>', 'pad_token': '<pad>',
@@ -95,3 +99,39 @@ def get_data_loaders(args, tokenizer):
     print("Train dataset (Batch, Candidates, Seq length): {}".format(train_dataset.tensors[0].shape))
     print("Valid dataset (Batch, Candidates, Seq length): {}".format(valid_dataset.tensors[0].shape))
     return train_loader, valid_loader, train_sampler, valid_sampler
+
+
+def preprocess_comet_dataset(dataset_path):
+    with open(dataset_path, "r+", encoding="utf-8") as f:
+        dataset = json.loads(f.read())
+    
+    for _, split in dataset.items():
+        for dialog in split:
+            comet_annotations = dialog['coment_annotation']
+            for s in comet_annotations:
+                comet = s['comet']
+                for k, v in comet.items():
+                    for i in range(len(v['beams'])):
+                        v['beams'][i] = preprocess(k, v['beams'][i])
+    
+    return dataset
+
+if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
+    args = parser.parse_args()
+
+    print('Starting preprocessing')
+    start = datetime.now()
+    dataset = preprocess_comet_dataset(args.dataset_path)
+    print('{} - Finished preprocessing.'.format(datetime.now() - start))
+
+    save_dir = os.path.dirname(os.path.realpath(args.dataset_path))
+    orig_filename = os.path.basename(args.dataset_path)
+    save_filename = orig_filename[:-5] + '_preprocessed.json'
+
+
+    with open('save_filename', 'w') as outfile:
+        json.dump(dataset, outfile)
+    
+    print('File saved.')

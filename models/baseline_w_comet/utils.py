@@ -13,6 +13,28 @@ from transformers import cached_path
 PERSONACHAT_URL = "https://s3.amazonaws.com/datasets.huggingface.co/personachat/personachat_self_original.json"
 HF_FINETUNED_MODEL = "https://s3.amazonaws.com/models.huggingface.co/transfer-learning-chatbot/gpt_personachat_cache.tar.gz"
 
+
+def preprocess(effect_type, beam):
+    if effect_type == 'xAttr':
+        beam = 'I am ' + beam
+    elif effect_type == 'xEffect':
+        if 'personx' not in beam:
+            beam = 'i ' + beam
+        beam = beam.replace('personx', 'i')
+    elif effect_type == 'xIntent':
+        beam = 'i want ' + beam
+    elif effect_type == 'xNeed':
+        beam = 'i need ' + beam
+    elif effect_type == 'xReact':
+        beam = 'i feel ' + beam
+    elif effect_type == 'xWant':
+        beam = 'i want ' + beam
+    else:
+        beam = beam
+    
+    return beam + ' .'
+
+
 def download_pretrained_model():
     """ Download and extract finetuned model from S3 """
     resolved_archive_file = cached_path(HF_FINETUNED_MODEL)
