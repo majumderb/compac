@@ -60,6 +60,8 @@ def get_data_loaders(args, tokenizer):
             comet_annotations = dialog["coment_annotation"]
             for sent in comet_annotations:
                 sent_beams = []
+                if i == 0:
+                    print('For a sent: \n{}'.format(sent['comet']))
                 for effect_name, effect in sent['comet'].items():
                     if effect_name in EFFECTS:
                         if i == 0:
