@@ -59,10 +59,7 @@ def get_data_loaders(args, tokenizer):
             for sent in comet_annotations:
                 sent_beams = []
                 for effect in sent['comet'].items():
-                    if args.comet_greedy:
-                        sent_beams += [effect[1]['beams'][0]]
-                    else:
-                        sent_beams += effect[1]['beams']
+                    sent_beams += effect[1]['beams'][:args.num_beams]
             persona += sent_beams
             for _ in range(args.personality_permutations):
                 for utterance in dialog["utterances"]:
