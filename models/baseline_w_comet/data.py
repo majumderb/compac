@@ -15,6 +15,7 @@ ATTR_TO_SPECIAL_TOKEN = {'bos_token': '<bos>', 'eos_token': '<eos>', 'pad_token'
                          'additional_special_tokens': ('<speaker1>', '<speaker2>')}
 MODEL_INPUTS = ["input_ids", "mc_token_ids", "lm_labels", "mc_labels", "token_type_ids"]
 PADDED_INPUTS = ["input_ids", "lm_labels", "token_type_ids"]
+EFFECTS = ['oEffect', 'oReact', 'oWant', 'xAttr', 'xEffect', 'xIntent', 'xNeed', 'xReact', 'xWant']
 
 def pad_dataset(dataset, padding=0):
     """ Pad the dataset. This could be optimized by defining a Dataset class and padding at the batch level, but this is simpler. """
@@ -59,7 +60,8 @@ def get_data_loaders(args, tokenizer):
             for sent in comet_annotations:
                 sent_beams = []
                 for effect in sent['comet'].items():
-                    sent_beams += effect[1]['beams'][:args.num_beams]
+                    if effect in EFFECTS:
+                        sent_beams += effect[1]['beams'][:args.num_beams]
             persona += sent_beams
             for _ in range(args.personality_permutations):
                 for utterance in dialog["utterances"]:
