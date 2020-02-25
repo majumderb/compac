@@ -63,7 +63,7 @@ def get_data_loaders(args, tokenizer):
                 for effect_name, effect in sent['comet'].items():
                     if effect_name in EFFECTS:
                         if i == 0:
-                            print('Getting data for effect {}'.format(_name))
+                            print('Getting data for effect {}'.format(effect_name))
                             print('Getting {} beams'.format(len(effect[1]['beams'][:args.num_beams])))
                         sent_beams += effect[1]['beams'][:args.num_beams]
             persona += sent_beams
