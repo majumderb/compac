@@ -61,7 +61,7 @@ pyhton train.py --dataset_path=/data3/harsh/data/comet_persona_outputs_v1/person
 def train():
     parser = ArgumentParser()
     parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
-    parser.add_argument("--dataset_cache", type=str, default='persona_comet', help="Path or url of the dataset cache")
+    parser.add_argument("--dataset_cache", type=str, default='persona_comet_preprocessed', help="Path or url of the dataset cache")
     parser.add_argument("--model_checkpoint", type=str, default="openai-gpt", help="Path, url or short name of the model")
     parser.add_argument("--num_candidates", type=int, default=2, help="Number of candidates for training")
     parser.add_argument("--max_history", type=int, default=2, help="Number of previous exchanges to keep in history")
