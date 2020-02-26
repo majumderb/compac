@@ -71,17 +71,20 @@ def get_data_loaders(args, tokenizer):
                 i += 1        
             persona += sent_beams
 
-            for _ in range(args.personality_permutations):
-                for utterance in dialog["utterances"]:
-                    history = utterance["history"][-(2*args.max_history+1):]
-                    for j, candidate in enumerate(utterance["candidates"][-num_candidates:]):
-                        lm_labels = bool(j == num_candidates-1)
-                        instance = build_input_from_segments(persona, history, candidate, tokenizer, lm_labels)
-                        for input_name, input_array in instance.items():
-                            datasets[dataset_name][input_name].append(input_array)
-                    datasets[dataset_name]["mc_labels"].append(num_candidates - 1)
-                    datasets[dataset_name]["n_candidates"] = num_candidates
-                persona = [persona[-1]] + persona[:-1]  # permuted personalities
+            if args.no_persona:
+                persona = [[]]
+            else:
+                for _ in range(args.personality_permutations):
+                    for utterance in dialog["utterances"]:
+                        history = utterance["history"][-(2*args.max_history+1):]
+                        for j, candidate in enumerate(utterance["candidates"][-num_candidates:]):
+                            lm_labels = bool(j == num_candidates-1)
+                            instance = build_input_from_segments(persona, history, candidate, tokenizer, lm_labels)
+                            for input_name, input_array in instance.items():
+                                datasets[dataset_name][input_name].append(input_array)
+                        datasets[dataset_name]["mc_labels"].append(num_candidates - 1)
+                        datasets[dataset_name]["n_candidates"] = num_candidates
+                    persona = [persona[-1]] + persona[:-1]  # permuted personalities
 
     print("Pad inputs and convert to Tensor")
     tensor_datasets = {"train": [], "valid": []}

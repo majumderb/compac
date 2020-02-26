@@ -87,6 +87,7 @@ def train():
     parser.add_argument("--exp_name", type=str, default="", required=True, help="Provide an experiment name")
     parser.add_argument("--do_train", action='store_true', help="Do training")
     parser.add_argument("--do_eval", action='store_true', help="Do Evaluation")
+    parser.add_argument("--no_persona", action='store_true', help="No Persona Evaluation")
     args = parser.parse_args()
 
     # logging is set to INFO (resp. WARN) for main (resp. auxiliary) process. logger.info => log main process only, logger.warning => log all processes
