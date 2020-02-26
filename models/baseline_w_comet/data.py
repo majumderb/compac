@@ -72,7 +72,7 @@ def get_data_loaders(args, tokenizer):
             persona += sent_beams
 
             if args.no_persona:
-                persona = [[]]
+                persona = [['', '', '', '', '']]
             else:
                 for _ in range(args.personality_permutations):
                     for utterance in dialog["utterances"]:
