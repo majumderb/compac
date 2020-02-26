@@ -81,6 +81,8 @@ def train():
     parser.add_argument("--num_beams", type=int, default=5, help="Number of beams for comet expansion")
     parser.add_argument("--test_run_num", type=int, default=-1, help="Datapoints to run with in a test run")
     parser.add_argument("--exp_name", type=str, default="", required=True, help="Provide an experiment name")
+    parser.add_argument("--do_train", action='store_true', help="Do training")
+    parser.add_argument("--do_eval", action='store_true', help="Do Evaluation")
     args = parser.parse_args()
 
     # logging is set to INFO (resp. WARN) for main (resp. auxiliary) process. logger.info => log main process only, logger.warning => log all processes
@@ -101,8 +103,11 @@ def train():
 
 
     model_class = GPT2DoubleHeadsModel if "gpt2" in args.model_checkpoint else OpenAIGPTDoubleHeadsModel
+    if args.do_eval and not args.do_train:
+        print('Loading model from checkpoint {}'.format(args.checkpoint))
     model = model_class.from_pretrained(args.model_checkpoint)
     model.to(args.device)
+
     # Add special tokens if they are not already added
     add_special_tokens_(model, tokenizer)
     optimizer = AdamW(model.parameters(), lr=args.lr, correct_bias=True)
@@ -207,14 +212,20 @@ def train():
 
         # Attach evaluation to trainer: we evaluate when we start the training and at the end of each epoch
         trainer.add_event_handler(Events.EPOCH_COMPLETED, print_validation)
-        trainer.add_event_handler(Events.EPOCH_COMPLETED, lambda _: evaluator.run(val_loader))
-        if args.n_epochs < 1:
-            trainer.add_event_handler(Events.COMPLETED, lambda _: evaluator.run(val_loader))
-        if args.eval_before_start:
-            trainer.add_event_handler(Events.STARTED, lambda _: evaluator.run(val_loader))
+        if args.do_eval:
+            trainer.add_event_handler(Events.EPOCH_COMPLETED, lambda _: evaluator.run(val_loader))
+            if args.n_epochs < 1:
+                trainer.add_event_handler(Events.COMPLETED, lambda _: evaluator.run(val_loader))
+            if args.eval_before_start:
+                trainer.add_event_handler(Events.STARTED, lambda _: evaluator.run(val_loader))
 
     # Run the training
-    trainer.run(train_loader, max_epochs=args.n_epochs)
+    if args.do_train:
+        trainer.run(train_loader, max_epochs=args.n_epochs)
+    if args.do_eval and not args.do_train:
+        print('Running only Evaluation. No Training.')
+        evaluator.run(val_loader)
+
 
     # On the main process: close tensorboard logger and rename the last checkpoint (for easy re-loading with OpenAIGPTModel.from_pretrained method)
     if args.local_rank in [-1, 0] and args.n_epochs > 0:

@@ -68,7 +68,7 @@ def get_data_loaders(args, tokenizer):
                             print('Getting data for effect {}'.format(effect_name))
                             print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
                         sent_beams += effect['beams'][:args.num_beams]
-                i = 1        
+                i += 1        
             persona += sent_beams
 
             for _ in range(args.personality_permutations):
