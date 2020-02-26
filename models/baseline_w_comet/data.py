@@ -60,11 +60,11 @@ def get_data_loaders(args, tokenizer):
                 comet_annotations = dialog["coment_annotation"]
                 sent_beams = []
                 for j, sent in enumerate(comet_annotations):
-                    if j == 0:
+                    if i == 0 and j == 0:
                         print('For a sent: \n{}'.format(sent['comet']))
                     for effect_name, effect in sent['comet'].items():
                         if effect_name in EFFECTS:
-                            if j == 0:
+                            if i == 0 and j == 0:
                                 print('Getting data for effect {}'.format(effect_name))
                                 print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
                             sent_beams += effect['beams'][:args.num_beams]
