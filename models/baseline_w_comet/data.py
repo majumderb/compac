@@ -73,7 +73,7 @@ def get_data_loaders(args, tokenizer):
             
             for _ in range(args.personality_permutations):
                 if args.no_persona:
-                    persona = [['', '', '', '', '']]
+                    persona = [[50256]]
                 for utterance in dialog["utterances"]:
                     history = utterance["history"][-(2*args.max_history+1):]
                     for j, candidate in enumerate(utterance["candidates"][-num_candidates:]):
