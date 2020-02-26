@@ -54,22 +54,23 @@ def get_data_loaders(args, tokenizer):
         if args.test_run_num > 0:
             dataset = dataset[:args.test_run_num]
 
-        i = 0 # for printing
-        for dialog in dataset:
+        for i, dialog in enumerate(dataset):
             persona = dialog["personality"].copy()
-            comet_annotations = dialog["coment_annotation"]
-            for sent in comet_annotations:
+            if not args.no_comet_persona:
+                comet_annotations = dialog["coment_annotation"]
                 sent_beams = []
+                for j, sent in enumerate(comet_annotations):
+                    if j == 0:
+                        print('For a sent: \n{}'.format(sent['comet']))
+                    for effect_name, effect in sent['comet'].items():
+                        if effect_name in EFFECTS:
+                            if j == 0:
+                                print('Getting data for effect {}'.format(effect_name))
+                                print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
+                            sent_beams += effect['beams'][:args.num_beams]
                 if i == 0:
-                    print('For a sent: \n{}'.format(sent['comet']))
-                for effect_name, effect in sent['comet'].items():
-                    if effect_name in EFFECTS:
-                        if i == 0:
-                            print('Getting data for effect {}'.format(effect_name))
-                            print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
-                        sent_beams += effect['beams'][:args.num_beams]
-                i += 1        
-            persona += sent_beams
+                    print('Got {} beams'.format(len(sent_beams)))        
+                persona += sent_beams
             
             for _ in range(args.personality_permutations):
                 if args.no_persona:
