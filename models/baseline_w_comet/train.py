@@ -52,6 +52,10 @@ distributed
 
 python3 -m torch.distributed.launch --nproc_per_node=2 train.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --max_history=2 --n_epochs=1 --num_candidates=4 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1
 
+only eval:
+
+python3 train.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/Feb24_22-43-01_deepyeti_gpt2concat_comet_p_b1 --max_history=2 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5  --num_beams 1 --exp_name test --do_eval
+
 python3 train.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --max_history=2 --n_epochs=1 --num_candidates=4 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5  --num_beams 1 --exp_name test
 
 deepx
@@ -228,7 +232,7 @@ def train():
 
 
     # On the main process: close tensorboard logger and rename the last checkpoint (for easy re-loading with OpenAIGPTModel.from_pretrained method)
-    if args.local_rank in [-1, 0] and args.n_epochs > 0:
+    if args.local_rank in [-1, 0] and args.n_epochs > 0 and args.do_train:
         os.rename(os.path.join(log_dir, checkpoint_handler._saved[-1][1]), os.path.join(log_dir, WEIGHTS_NAME))  # TODO: PR in ignite to have better access to saved file paths (cleaner)
         # tb_logger.close()
 
