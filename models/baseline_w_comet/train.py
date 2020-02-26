@@ -108,7 +108,7 @@ def train():
 
     model_class = GPT2DoubleHeadsModel if "gpt2" in args.model_checkpoint else OpenAIGPTDoubleHeadsModel
     if args.do_eval and not args.do_train:
-        print('Loading model from checkpoint {}'.format(args.checkpoint))
+        print('Loading model from checkpoint {}'.format(args.model_checkpoint))
     model = model_class.from_pretrained(args.model_checkpoint)
     model.to(args.device)
 
