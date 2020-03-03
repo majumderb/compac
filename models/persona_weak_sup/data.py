@@ -95,6 +95,8 @@ def get_data_loaders(args, tokenizer):
 
                     # refactor persona for the first time
                     refactored_persona = [persona[k] for k in persona_labels]
+                    if len(refactored_persona) == 0:
+                        refactored_persona = [[]]
 
                     # permute turn specific refactored persona
                     for _ in range(perm):
