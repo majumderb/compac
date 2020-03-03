@@ -83,6 +83,7 @@ def get_data_loaders(args, tokenizer):
                     weak_label = dialog["weak_labels"][2*i + 1]
                     # making sure we are getting the weak labels for correct utterance
                     if weak_label["sentence"] != utterance["candidates"][-1]:
+                        print('ERROR!')
                         print(weak_label["sentence"])
                         print(utterance["candidates"][-1])
 
