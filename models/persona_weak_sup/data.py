@@ -55,21 +55,23 @@ def get_data_loaders(args, tokenizer):
         if args.test_run_num > 0:
             dataset = dataset[:args.test_run_num]
 
-        for i, dialog in enumerate(dataset):
+        for d_i, dialog in enumerate(dataset):
             persona = dialog["personality"].copy()
             if not args.no_comet_persona:
                 comet_annotations = dialog["coment_annotation"]
                 sent_beams = []
-                for j, sent in enumerate(comet_annotations):
-                    if i == 0 and j == 0:
+                for j_s, sent in enumerate(comet_annotations):
+                    # logging
+                    if d_i == 0 and j == 0:
                         print('For a sent: \n{}'.format(sent['comet']))
                     for effect_name, effect in sent['comet'].items():
                         if effect_name in EFFECTS:
-                            if i == 0 and j == 0:
+                            # logging
+                            if d_i == 0 and j_s == 0:
                                 print('Getting data for effect {}'.format(effect_name))
                                 print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
                             sent_beams += effect['beams'][:args.num_beams]
-                if i == 0:
+                if d_i == 0:
                     print('Got {} beams'.format(len(sent_beams)))        
                 persona += sent_beams
             
@@ -88,8 +90,17 @@ def get_data_loaders(args, tokenizer):
                             persona_labels.append(l["idx"])
 
                     # refactor persona for the first time
-                    if perm == 0:
-                        refactored_persona = [persona[k] for k in persona_labels]
+                    refactored_persona = [persona[k] for k in persona_labels]
+
+                    # permute turn specific refactored persona
+                    for _ in range(perm):
+                        refactored_persona = [refactored_persona[-1]] + refactored_persona[:-1]
+
+                    # logging for first dialog
+                    if d_i == 0:
+                        print('Original Persona: {}'.format(persona))
+                        print('Weak labels for {}-th persona speaker turn: {}'.format(i, persona_labels))
+                        print('Refactored persona for {}-th persona speaker turn: {}'.format(i, refactored_persona))
 
                     history = utterance["history"][-(2*args.max_history+1):]
                     for j, candidate in enumerate(utterance["candidates"][-num_candidates:]):
@@ -99,7 +110,7 @@ def get_data_loaders(args, tokenizer):
                             datasets[dataset_name][input_name].append(input_array)
                     datasets[dataset_name]["mc_labels"].append(num_candidates - 1)
                     datasets[dataset_name]["n_candidates"] = num_candidates
-                refactored_persona = [refactored_persona[-1]] + refactored_persona[:-1]  # permuted personalities
+                # persona = [persona[-1]] + persona[:-1]  # permuted personalities
 
     print("Pad inputs and convert to Tensor")
     tensor_datasets = {"train": [], "valid": []}
