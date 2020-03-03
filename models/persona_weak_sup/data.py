@@ -82,7 +82,10 @@ def get_data_loaders(args, tokenizer):
                 for i, utterance in enumerate(dialog["utterances"]):
                     weak_label = dialog["weak_labels"][2*i + 1]
                     # making sure we are getting the weak labels for correct utterance
-                    assert weak_label["sentence"] == utterance["candidates"][-1]
+                    if weak_label["sentence"] != utterance["candidates"][-1]:
+                        print(weak_label["sentence"])
+                        print(utterance["candidates"][-1])
+                        raise
 
                     # collect persona weak labels
                     persona_labels = []
