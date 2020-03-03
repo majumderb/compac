@@ -59,6 +59,8 @@ def get_dataset(tokenizer, dataset_path, dataset_cache):
         print("Tokenize and encode the dataset")
         start = datetime.now()
         def tokenize(obj):
+            if isinstance(obj, float) or isinstance(obj, int):
+                return obj
             if isinstance(obj, str):
                 return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj))
             if isinstance(obj, dict):
