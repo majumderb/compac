@@ -80,7 +80,7 @@ def get_data_loaders(args, tokenizer):
                 if args.no_persona:
                     refactored_persona = [[]]
                 for i, utterance in enumerate(dialog["utterances"]):
-                    weak_label = dialog["weak_labels"][2*i]
+                    weak_label = dialog["weak_labels"][2*i + 1]
                     # making sure we are getting the weak labels for correct utterance
                     assert weak_label["sentence"] == utterance["candidates"][-1]
 
