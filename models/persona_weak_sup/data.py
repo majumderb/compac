@@ -85,7 +85,6 @@ def get_data_loaders(args, tokenizer):
                     if weak_label["sentence"] != utterance["candidates"][-1]:
                         print(weak_label["sentence"])
                         print(utterance["candidates"][-1])
-                        raise
 
                     # collect persona weak labels
                     persona_labels = []
