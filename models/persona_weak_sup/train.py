@@ -56,6 +56,8 @@ only eval:
 
 python3 train.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/Feb24_22-43-01_deepyeti_gpt2concat_comet_p_b1 --max_history=2 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5  --num_beams 1 --exp_name test --do_eval
 
+train 1 gpu:
+
 python3 train.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --max_history=2 --n_epochs=1 --num_candidates=4 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5  --num_beams 1 --exp_name test
 
 deepx
@@ -65,7 +67,7 @@ pyhton train.py --dataset_path=/data3/harsh/data/comet_persona_outputs_v1/person
 def train():
     parser = ArgumentParser()
     parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
-    parser.add_argument("--dataset_cache", type=str, default='persona_comet_preprocessed', help="Path or url of the dataset cache")
+    parser.add_argument("--dataset_cache", type=str, default='persona_comet_weak_label_preprocessed', help="Path or url of the dataset cache")
     parser.add_argument("--model_checkpoint", type=str, default="openai-gpt", help="Path, url or short name of the model")
     parser.add_argument("--num_candidates", type=int, default=2, help="Number of candidates for training")
     parser.add_argument("--max_history", type=int, default=2, help="Number of previous exchanges to keep in history")
