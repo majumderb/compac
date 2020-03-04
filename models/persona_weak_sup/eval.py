@@ -38,6 +38,8 @@ parser.add_argument("--no_comet_persona", action='store_true', help="No Persona 
 args = parser.parse_args()
 
 
+args.distributed = (args.local_rank != -1)
+
 print("Prepare tokenizer, pretrained model and optimizer.")
 tokenizer_class = GPT2Tokenizer if "gpt2" in args.model_checkpoint else OpenAIGPTTokenizer # cant use Autotokenizer because checkpoint could be a Path
 tokenizer = tokenizer_class.from_pretrained(args.model_checkpoint)
