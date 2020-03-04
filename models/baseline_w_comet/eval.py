@@ -1,3 +1,4 @@
+# MUST USE pytorch_transformers for models from this folder
 from pytorch_transformers import (AdamW, OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer,
                                   GPT2DoubleHeadsModel, GPT2Tokenizer, WEIGHTS_NAME, CONFIG_NAME)
 from argparse import ArgumentParser
@@ -86,11 +87,11 @@ print("Accuracy: {}".format(num_correct / num_examples))
 """
 comet 1:
 
-python3 eval.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=8 --test_run_num 5  --num_beams 1
+python3 eval.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/Feb26_02-46-06_deepyeti_gpt2baseline_concat_comet_p_b1 --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5  --num_beams 1
 
 comet 3:
-python3 eval.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=8 --test_run_num 5  --num_beams 3
+python3 eval.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/Feb26_03-22-09_deepyeti_gpt2baseline_concat_comet_p_b3 --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5  --num_beams 3
 
 no comet (og baseline):
-python3 eval.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/Feb22_12-49-10_deepyeti_gpt2 --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=8 --test_run_num 5  --no_comet_persona
+python3 eval.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/personachat_original_model --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5  --no_comet_persona
 """
