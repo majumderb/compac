@@ -75,7 +75,7 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
         # collect multiple choice (mc) logits for accuracy
         indices = torch.argmax(mc_logits, dim=1)
         correct = torch.eq(indices, mc_labels).view(-1)
-        print(list(correct.numpy().cpu()))
+        print(list(correct.cpu().numpy()))
     
     num_correct += torch.sum(correct).item()
     num_examples += correct.shape[0]
