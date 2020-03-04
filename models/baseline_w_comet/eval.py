@@ -12,7 +12,7 @@ import torch
 
 parser = ArgumentParser()
 parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
-parser.add_argument("--dataset_cache", type=str, default='persona_comet_weak_label_preprocessed', help="Path or url of the dataset cache")
+parser.add_argument("--dataset_cache", type=str, default='persona_comet_preprocessed', help="Path or url of the dataset cache")
 parser.add_argument("--model_checkpoint", type=str, default="openai-gpt", help="Path, url or short name of the model")
 parser.add_argument("--num_candidates", type=int, default=2, help="Number of candidates for training")
 parser.add_argument("--max_history", type=int, default=2, help="Number of previous exchanges to keep in history")
@@ -32,8 +32,8 @@ parser.add_argument("--local_rank", type=int, default=-1, help="Local rank for d
 parser.add_argument("--num_beams", type=int, default=5, help="Number of beams for comet expansion")
 parser.add_argument("--test_run_num", type=int, default=-1, help="Datapoints to run with in a test run")
 # parser.add_argument("--exp_name", type=str, default="", required=True, help="Provide an experiment name")
-parser.add_argument("--do_train", action='store_true', help="Do training")
-parser.add_argument("--do_eval", action='store_true', help="Do Evaluation")
+# parser.add_argument("--do_train", action='store_true', help="Do training")
+# parser.add_argument("--do_eval", action='store_true', help="Do Evaluation")
 parser.add_argument("--no_persona", action='store_true', help="No Persona Evaluation")
 parser.add_argument("--no_comet_persona", action='store_true', help="No Persona Evaluation")
 args = parser.parse_args()
@@ -84,5 +84,13 @@ print("Accuracy: {}".format(num_correct / num_examples))
 
 
 """
-/data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
+comet 1:
+
+python3 eval.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=8 --test_run_num 5  --num_beams 1
+
+comet 3:
+python3 eval.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=8 --test_run_num 5  --num_beams 3
+
+no comet (og baseline):
+python3 eval.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/Feb22_12-49-10_deepyeti_gpt2 --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=8 --test_run_num 5  --no_comet_persona
 """
