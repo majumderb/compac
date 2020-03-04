@@ -43,8 +43,7 @@ tokenizer_class = GPT2Tokenizer if "gpt2" in args.model_checkpoint else OpenAIGP
 tokenizer = tokenizer_class.from_pretrained(args.model_checkpoint)
 
 model_class = GPT2DoubleHeadsModel if "gpt2" in args.model_checkpoint else OpenAIGPTDoubleHeadsModel
-if args.do_eval and not args.do_train:
-    print('Loading model from checkpoint {}'.format(args.model_checkpoint))
+print('Loading model from checkpoint {}'.format(args.model_checkpoint))
 model = model_class.from_pretrained(args.model_checkpoint)
 model.to(args.device)
 
@@ -79,3 +78,8 @@ for i, batch in enumerate(val_loader):
 print("Accuracy: {}".format(num_correct / num_examples))
 
 # (lm_logits_flat_shifted, mc_logits), (lm_labels_flat_shifted, mc_labels)
+
+
+"""
+/data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
+"""
