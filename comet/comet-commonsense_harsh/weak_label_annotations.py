@@ -11,11 +11,12 @@ DUMP_FILE = None
 
 if val_only:
     ### -- running  with validation split only
-    DUMP_FILE = '../../data/personachat_self_original_comet_validation_scores_alignlabels.json'
+    # DUMP_FILE = '../../data/personachat_self_original_comet_validation_scores_alignlabels.json'
+    DUMP_FILE = '../../data/personachat_self_original_comet_validation_scores_alignlabels.expanded_persona.json'
     # python persona_explorations_annotations.py > persona_explorations_annotations_log_valonly
 else:
     ###  -- running with entire data
-    DUMP_FILE = '../../data/personachat_self_original_comet_scores_alignlabels.json'
+    DUMP_FILE = '../../data/personachat_self_original_comet_scores_alignlabels.expanded_persona.json'
     #python persona_explorations_annotations.py > persona_explorations_annotations_lo
 
 
@@ -69,6 +70,19 @@ def get_scores(s1, s2, idx=None): # both processed
     else:
         score = 0.0
     return {'score':score, 'idx':idx, 's1':list(s1), 's2':list(s2)}
+
+
+def get_recall_scores(s1, s2, idx=None): # both processed
+    s1 =set(s1)
+    s2 = set(s2)
+    num = len(s1.intersection(s2))
+    den = len(s1)  # s1 is the sentence of interest being matched over s2 belonging to a set   
+    if den>0.0:
+        score = num*1.0/den
+    else:
+        score = 0.0
+    return {'score':score, 'idx':idx, 's1':list(s1), 's2':list(s2)}
+    
     
     
 def match_sentence(sentence, reference, k=3, score_thresh=0.1):
@@ -76,7 +90,15 @@ def match_sentence(sentence, reference, k=3, score_thresh=0.1):
     ret = sorted( ret, key=lambda x:-x['score'] )
     ret = [vals for vals in ret if vals['score']>=score_thresh]
     return ret[:k]
-    
+
+def match_sentence(sentence, reference, k=3, score_thresh=0.1, use_recall_scores = False):
+    if use_recall_scores:
+        ret = [ get_recall_scores(sentence, ref_sentence, i) for i,ref_sentence in enumerate(reference) ]
+    else:
+        ret = [ get_scores(sentence, ref_sentence, i) for i,ref_sentence in enumerate(reference) ]
+    ret = sorted( ret, key=lambda x:-x['score'] )
+    ret = [vals for vals in ret if vals['score']>=score_thresh]
+    return ret[:k]
     
 def heuristic_matching(item, typ='unigram', rem_stop=True, persona_idx=None, k=3, score_thresh=0.1, alternate=True):
     
@@ -104,7 +126,59 @@ def heuristic_matching(item, typ='unigram', rem_stop=True, persona_idx=None, k=3
     
     return ret
     
+def heuristic_matching_comet(item, typ='unigram', 
+                       rem_stop=True, 
+                       persona_idx=None, 
+                       max_matches=3, 
+                       score_thresh=0.1, 
+                       alternate=True, 
+                       use_recall_scores=False):
     
+    utterances = item['utterances']
+    history = utterances[-1]['history']
+    personality = item['personality']
+    coment_annotation = item['coment_annotation']
+    
+    all_dialog = history + [utterances[-1]['candidates'][-1]]
+    
+    personality_processed = [ process_text(p,typ=typ,rem_stop=rem_stop) for p in personality]
+    
+    weak_label_comet_persona = []
+    for h,sent_h in enumerate(all_dialog):
+        #print("="*22)
+        tmp_h = []
+        sent_h_processed = process_text(sent_h)
+        #print("sent_h_processed = ", sent_h_processed)
+        if alternate and h%2==0:
+            pass
+        else:
+            for i,coment_annotation_i in enumerate(coment_annotation):
+                coment_annotation_i = coment_annotation_i['comet'] # dictionary
+                for j,comet_keyj in enumerate(coment_annotation_i.keys()):
+                    for k,beam in enumerate(coment_annotation_i[comet_keyj]['beams']):
+                        ijk_processed = process_text(beam)
+                        #print("ijk_processed = ", ijk_processed)
+                        tmp_ijk = match_sentence( sent_h_processed, 
+                                                 [ijk_processed], 
+                                                 use_recall_scores = use_recall_scores,
+                                                score_thresh=score_thresh)
+                        if len(tmp_ijk) > 0:
+                            tmp_ijk = tmp_ijk[0] # there is only one entry
+                            score = tmp_ijk['score']
+                            tmp_h.append( [ { 'persona_sent_id':i, 
+                                             'comet_key':comet_keyj, 
+                                             'beam_id':k, 
+                                             'entry':beam }, 
+                                           score ] )
+            #print(" max_matches = ", max_matches)
+            tmp_h = sorted( tmp_h, key=lambda x:-x[1] )[:max_matches]
+        cur = {'label_persona':tmp_h, 'sentence':sent_h}
+        weak_label_comet_persona.append(cur)
+    
+    ret = weak_label_comet_persona
+    
+    return ret
+        
 
 class Args:
     def __init__(self, 
@@ -226,6 +300,15 @@ tmp = heuristic_matching(solver.data['valid'][0], k=3, score_thresh=0.15)
 # tmp = json.dumps(tmp, indent=4)
 for j in range(len(tmp)):
     print(j, tmp[j])
+    
+# ***** NEW
+weak_label_comet_persona = heuristic_matching_comet(solver.data['valid'][0], max_matches=5, score_thresh=0.1)  
+for j in range(len(weak_label_comet_persona)):
+    print(j, weak_label_comet_persona[j])   
 
 solver.process_all(DUMP_FILE, debug=False, val_only=val_only)
+
+
+
+
 
