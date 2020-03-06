@@ -74,7 +74,7 @@ def get_data_loaders(args, tokenizer):
                             sent_beams += effect['beams'][:args.num_beams]
                 if d_i == 0:
                     print('Got {} beams'.format(len(sent_beams)))        
-                persona += sent_beams
+                # persona += sent_beams
             
             for perm in range(args.personality_permutations):
                 if args.no_persona:
