@@ -66,7 +66,7 @@ def get_data_loaders(args, tokenizer):
                     if d_i == 0 and j_s == 0:
                         print('For a sent: \n{}'.format(sent['comet']))
                     for effect_name, effect in sent['comet'].items():
-                        if effect_name in EFFECTS:
+                        # if effect_name in EFFECTS:
                             # logging
                             if d_i == 0 and j_s == 0:
                                 print('Getting data for effect {}'.format(effect_name))
@@ -104,7 +104,7 @@ def get_data_loaders(args, tokenizer):
                         refactored_comet_persona = []
                         if len(weak_label["label_persona"]) > 0:
                             for match in weak_label_comet["label_persona"]:
-                                comet_for_sent = comet_annotations[match[0]["persona_sent_id"]]
+                                comet_for_sent = comet_annotations[match[0]["persona_sent_id"]]['comet']
                                 refactored_comet_persona.append(comet_for_sent[match[0]["comet_key"]]["beams"][match[0]["beam_id"]])
                         
                         refactored_persona += refactored_comet_persona
