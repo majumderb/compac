@@ -63,7 +63,7 @@ def get_data_loaders(args, tokenizer):
                 sent_beams = []
                 for j_s, sent in enumerate(comet_annotations):
                     # logging
-                    if d_i == 0 and j == 0:
+                    if d_i == 0 and j_s == 0:
                         print('For a sent: \n{}'.format(sent['comet']))
                     for effect_name, effect in sent['comet'].items():
                         if effect_name in EFFECTS:
