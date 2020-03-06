@@ -104,6 +104,7 @@ def get_data_loaders(args, tokenizer):
                         refactored_comet_persona = []
                         if len(weak_label["label_persona"]) > 0:
                             for match in weak_label_comet["label_persona"]:
+                                print(match)
                                 comet_for_sent = comet_annotations[match["persona_sent_id"]]
                                 refactored_comet_persona.append(comet_for_sent[match["comet_key"]]["beams"][match["beam_id"]])
                         
