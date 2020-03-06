@@ -94,5 +94,5 @@ comet 3:
 python3 eval.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/Feb26_03-22-09_deepyeti_gpt2baseline_concat_comet_p_b3 --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5  --num_beams 3
 
 no comet (og baseline):
-python3 eval.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/personachat_original_model --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5  --no_comet_persona
+python3 eval.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/personachat_original_gpt2model --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5  --no_comet_persona
 """

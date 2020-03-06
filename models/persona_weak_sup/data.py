@@ -81,8 +81,10 @@ def get_data_loaders(args, tokenizer):
                     refactored_persona = [[]]
                 for i, utterance in enumerate(dialog["utterances"]):
                     weak_label = dialog["weak_labels"][2*i + 1]
+                    if not args.no_comet_persona:
+                        weak_label_comet = dialog["weak_labels_comet"][2*i + 1]
                     # making sure we are getting the weak labels for correct utterance
-                    if weak_label["sentence"] != utterance["candidates"][-1]:
+                    if weak_label["sentence"] != utterance["candidates"][-1] and weak_label_comet["sentence"] != utterance["candidates"][-1]:
                         print('ERROR!')
                         print(weak_label["sentence"])
                         print(utterance["candidates"][-1])
@@ -98,6 +100,15 @@ def get_data_loaders(args, tokenizer):
                     if len(refactored_persona) == 0:
                         refactored_persona = [[]]
 
+                    if not args.no_comet_persona:
+                        refactored_comet_persona = []
+                        if len(weak_label["label_persona"]) > 0:
+                            for match in weak_label_comet["label_persona"]:
+                                comet_for_sent = comet_annotations[match["persona_sent_id"]]
+                                refactored_comet_persona.append(comet_for_sent[match["comet_key"]]["beams"][match["beam_id"]])
+                        
+                        refactored_persona += refactored_comet_persona
+                    
                     # permute turn specific refactored persona
                     for _ in range(perm):
                         refactored_persona = [refactored_persona[-1]] + refactored_persona[:-1]

@@ -64,7 +64,7 @@ def get_dataset(tokenizer, dataset_path, dataset_cache):
             if isinstance(obj, str):
                 return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj))
             if isinstance(obj, dict):
-                return dict((n, tokenize(o)) for n, o in obj.items())
+                return dict((n, tokenize(o)) if n != "comet_key" else (n, o) for n, o in obj.items())
             return list(tokenize(o) for o in obj)
         dataset = tokenize(dataset)
         torch.save(dataset, dataset_cache)
