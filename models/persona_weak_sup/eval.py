@@ -74,7 +74,7 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
         # collect multiple choice (mc) logits for accuracy
         indices = torch.argmax(mc_logits, dim=1)
         correct = torch.eq(indices, mc_labels).view(-1)
-        print(list(correct.cpu().numpy()))
+        # print(list(correct.cpu().numpy()))
     
     num_correct += torch.sum(correct).item()
     num_examples += correct.shape[0]
@@ -87,6 +87,10 @@ print("Accuracy: {}".format(num_correct / num_examples))
 """
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
 
-python3 eval.py --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --test_run_num 30  --no_comet_persona
+python3 eval.py --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --test_run_num 30  --no_comet_persona
+
+w comet
+
+python3 eval.py --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar06_00-00-11_deepyeti_gpt2weak_labels_w_comet --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --test_run_num 30
 
 """
