@@ -4,7 +4,7 @@
 
 DATA_FILE = '/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json'
 
-val_only = False
+val_only = True
 DUMP_FILE = '../../data/personachat_self_original_comet_validation.json'
 
 
