@@ -178,5 +178,5 @@ solver = AnnotatePersonaChat()
 
 
 
-solver.process_all(DUMP_FILE, debug=True, val_only=val_only)
+solver.process_all(DUMP_FILE, debug=False, val_only=val_only)
 
