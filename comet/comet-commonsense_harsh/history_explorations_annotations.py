@@ -2,7 +2,7 @@
 # coding: utf-8
 
 
-DATA_FILE = '../../data/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json'
+DATA_FILE = '/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json'
 
 val_only = False
 DUMP_FILE = '../../data/personachat_self_original_comet_validation.json'
@@ -10,7 +10,7 @@ DUMP_FILE = '../../data/personachat_self_original_comet_validation.json'
 
 if val_only:
     ### -- running  with validation split only
-    DUMP_FILE = '../../data/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_history_preprocessed_validation.json'
+    DUMP_FILE = '/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_history_preprocessed_validation.json'
     # python persona_explorations_annotations.py > persona_explorations_annotations_log_valonly
 else:
     ###  -- running with entire data
