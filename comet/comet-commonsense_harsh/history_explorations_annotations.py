@@ -38,7 +38,7 @@ import src.interactive.functions as interactive
 
 class Args:
     def __init__(self, 
-                 device = 'cpu',
+                 device = 'gpu',
                  model_file="pretrained_models/atomic_pretrained_model.pickle",
                  sampling_algorithm = 'beam-5'
                 ):
