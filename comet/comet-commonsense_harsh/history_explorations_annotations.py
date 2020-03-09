@@ -152,17 +152,17 @@ class AnnotatePersonaChat():
             print("******* split =",split, " || data: ", len(data) )
             
             for j,row in enumerate(data):
-                # try:
-                    utterances = sample['utterances']
+                try:
+                    utterances = row['utterances']
                     history = utterances[-1]['history'] + [utterances[-1]['candidates'][-1]]
                     row['history_comet_annotation'] = fnc(history)
                     annotated_data.append(row)
-                # except:
-                #     miss_cnt += 1
-                #     continue
-                # if debug:
-                #     break
-                # print("******* split =",split, " j = ", j )
+                except:
+                    miss_cnt += 1
+                    continue
+                if debug:
+                    break
+                print("******* split =",split, " j = ", j )
                     
             self.annotated_data[split] = annotated_data
             print("******* split =",split, " || annotated_data: ", len(annotated_data), " || miss_cnt=",miss_cnt )
