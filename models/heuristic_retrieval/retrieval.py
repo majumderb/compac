@@ -81,6 +81,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
         ranks.append([cs[0] for cs in candidate_scores].index(gt_index) + 1)
         total += 1
 
+print('Total {} utterances retrieved'.format(total))
 print('Accuracy: {}'.format(correct / total))
 
 mrr = sum([1/r for r in ranks])/ len(ranks)
