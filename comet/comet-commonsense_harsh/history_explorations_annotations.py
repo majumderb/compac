@@ -159,6 +159,7 @@ class AnnotatePersonaChat():
                     annotated_data.append(row)
                 except:
                     miss_cnt += 1
+                    print('!ERROR!\n', history)
                     continue
                 if debug:
                     break
