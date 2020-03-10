@@ -1,41 +1,11 @@
 
 # coding: utf-8
-
-
-DATA_FILE = '../../data/personachat_self_original_comet_scores.json'
-
-
-val_only = False
-DUMP_FILE = None
-
-
-if val_only:
-    ### -- running  with validation split only
-    # DUMP_FILE = '../../data/personachat_self_original_comet_validation_scores_alignlabels.json'
-    DUMP_FILE = '../../data/personachat_self_original_comet_validation_scores_alignlabels.expanded_persona.json'
-    # python persona_explorations_annotations.py > persona_explorations_annotations_log_valonly
-else:
-    ###  -- running with entire data
-    DUMP_FILE = '../../data/personachat_self_original_comet_scores_alignlabels.expanded_persona.json'
-    #python persona_explorations_annotations.py > persona_explorations_annotations_lo
-
-
-
-print("DATA_FILE = ", DATA_FILE)
-print("DUMP_FILE = ", DUMP_FILE)
-
 import os
 import sys
 import argparse
 import torch
 
 sys.path.append(os.getcwd())
-
-# import src.data.data as data
-import src.data.config as cfg
-import src.interactive.functions as interactive
-
-
 
 from nltk.stem import PorterStemmer 
 from nltk.tokenize import word_tokenize 
@@ -85,11 +55,11 @@ def get_recall_scores(s1, s2, idx=None): # both processed
     
     
     
-def match_sentence(sentence, reference, k=3, score_thresh=0.1):
-    ret = [ get_scores(sentence, ref_sentence, i) for i,ref_sentence in enumerate(reference) ]
-    ret = sorted( ret, key=lambda x:-x['score'] )
-    ret = [vals for vals in ret if vals['score']>=score_thresh]
-    return ret[:k]
+# def match_sentence(sentence, reference, k=3, score_thresh=0.1):
+#     ret = [ get_scores(sentence, ref_sentence, i) for i,ref_sentence in enumerate(reference) ]
+#     ret = sorted( ret, key=lambda x:-x['score'] )
+#     ret = [vals for vals in ret if vals['score']>=score_thresh]
+#     return ret[:k]
 
 def match_sentence(sentence, reference, k=3, score_thresh=0.1, use_recall_scores = False):
     if use_recall_scores:
@@ -223,90 +193,90 @@ args = Args()
 
 # sampling_algorithm = args.sampling_algorithm
 
-def fnc(persona, debug=False): # list of sentences
+# def fnc(persona, debug=False): # list of sentences
 
-    ret = []
-    for sent in persona:
+#     ret = []
+#     for sent in persona:
         
-        cur_sent = {'sent':sent}
-        if debug:
-            print()
-            print("-x"*33)
-            print("=====>>>> sent = ", sent)
+#         cur_sent = {'sent':sent}
+#         if debug:
+#             print()
+#             print("-x"*33)
+#             print("=====>>>> sent = ", sent)
 
-        input_event = sent
-        category = "all"
+#         input_event = sent
+#         category = "all"
         
-        if debug:
-            print()
-            print("category = ", category)
+#         if debug:
+#             print()
+#             print("category = ", category)
 
-        sampler = interactive.set_sampler(opt, sampling_algorithm, data_loader)
-        outputs = interactive.get_atomic_sequence(
-            input_event, model, sampler, data_loader, text_encoder, category)
-        # print("outputs = ", outputs)
-        cur_sent['comet']  = outputs
-        ret.append(cur_sent)
+#         sampler = interactive.set_sampler(opt, sampling_algorithm, data_loader)
+#         outputs = interactive.get_atomic_sequence(
+#             input_event, model, sampler, data_loader, text_encoder, category)
+#         # print("outputs = ", outputs)
+#         cur_sent['comet']  = outputs
+#         ret.append(cur_sent)
 
-    return ret
-
-
-# In[14]:
+#     return ret
 
 
-import json
-import random
+# # In[14]:
 
-class AnnotatePersonaChat():
+
+# import json
+# import random
+
+# class AnnotatePersonaChat():
     
-    def __init__(self):
-        with open(DATA_FILE, "r", encoding="utf-8") as read_file:
-            self.data = json.load(read_file)
+#     def __init__(self):
+#         with open(DATA_FILE, "r", encoding="utf-8") as read_file:
+#             self.data = json.load(read_file)
 
-        print('Read {} training examples and {} validation examples'.format(
-            len(self.data['train']), len(self.data['valid'])
-        ))
+#         print('Read {} training examples and {} validation examples'.format(
+#             len(self.data['train']), len(self.data['valid'])
+#         ))
 
         
-    def process_all(self, dump_fname, debug=False, val_only=False):
-        self.annotated_data = {}
-        for split,data in self.data.items():
-            if val_only and split=='train':
-                continue
-            annotated_data = []
-            miss_cnt = 0
-            print("******* split =",split, " || data: ", len(data) )
+#     def process_all(self, dump_fname, debug=False, val_only=False):
+#         self.annotated_data = {}
+#         for split,data in self.data.items():
+#             if val_only and split=='train':
+#                 continue
+#             annotated_data = []
+#             miss_cnt = 0
+#             print("******* split =",split, " || data: ", len(data) )
             
-            for j,row in enumerate(data):
-                try:
-                    row['weak_labels'] = heuristic_matching(row, k=3, score_thresh=0.15)
-                    annotated_data.append(row)
-                except:
-                    miss_cnt += 1
-                    continue
-                if debug:
-                    break
-                print("******* split =",split, " j = ", j )
+#             for j,row in enumerate(data):
+#                 try:
+#                     row['weak_labels'] = heuristic_matching(row, k=3, score_thresh=0.15)
+#                     annotated_data.append(row)
+#                 except:
+#                     miss_cnt += 1
+#                     continue
+#                 if debug:
+#                     break
+#                 print("******* split =",split, " j = ", j )
                     
-            self.annotated_data[split] = annotated_data
-            print("******* split =",split, " || annotated_data: ", len(annotated_data), " || miss_cnt=",miss_cnt )
-        json.dump(self.annotated_data, open(dump_fname,'w'))
+#             self.annotated_data[split] = annotated_data
+#             print("******* split =",split, " || annotated_data: ", len(annotated_data), " || miss_cnt=",miss_cnt )
+#         json.dump(self.annotated_data, open(dump_fname,'w'))
 
 
-solver = AnnotatePersonaChat()
+# solver = AnnotatePersonaChat()
 
-print(solver.data.keys())
-tmp = heuristic_matching(solver.data['valid'][0], k=3, score_thresh=0.15)  
-# tmp = json.dumps(tmp, indent=4)
-for j in range(len(tmp)):
-    print(j, tmp[j])
+# print(solver.data.keys())
+# tmp = heuristic_matching(solver.data['valid'][0], k=3, score_thresh=0.15)  
+# # tmp = json.dumps(tmp, indent=4)
+# for j in range(len(tmp)):
+#     print(j, tmp[j])
     
-# ***** NEW
-weak_label_comet_persona = heuristic_matching_comet(solver.data['valid'][0], max_matches=5, score_thresh=0.1)  
-for j in range(len(weak_label_comet_persona)):
-    print(j, weak_label_comet_persona[j])   
+# # ***** NEW
+# weak_label_comet_persona = heuristic_matching_comet(solver.data['valid'][0], max_matches=5, score_thresh=0.1)  
+# for j in range(len(weak_label_comet_persona)):
+#     print(j, weak_label_comet_persona[j])   
 
-solver.process_all(DUMP_FILE, debug=False, val_only=val_only)
+# solver.process_all(DUMP_FILE, debug=False, val_only=val_only)
 
 
 
