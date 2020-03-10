@@ -11,6 +11,10 @@ parser = ArgumentParser()
 parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
 parser.add_argument("--dataset_cache", type=str, default='persona_comet_weak_label_preprocessed', help="Path or url of the dataset cache")
 parser.add_argument("--num_beams", type=int, default=5, help="Number of beams for comet expansion")
+parser.add_argument("--comet_persona", action='store_true')
+parser.add_argument("--history", action='store_true')
+parser.add_argument("--comet_history", action='store_true')
+
 
 args = parser.parse_args()
 
@@ -26,45 +30,48 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
         # add personality
         grounding_doc += dialog["personality"]
 
-        # add comet expansions for personality
-        comet_annotations = dialog["coment_annotation"]
-        sent_beams_persona = []
-        for j_s, sent in enumerate(comet_annotations):
-            # logging
-            if d_i == 0 and j_s == 0:
-                print('For a sent: \n{}'.format(sent['comet']))
-            for effect_name, effect in sent['comet'].items():
-                # if effect_name in EFFECTS:
-                    # logging
-                    if d_i == 0 and j_s == 0:
-                        print('Getting data for effect {}'.format(effect_name))
-                        print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
-                    sent_beams_persona += effect['beams'][:args.num_beams]
-        if d_i == 0:
-            print('Got {} beams'.format(len(sent_beams_persona)))        
-        grounding_doc += sent_beams_persona
+        if args.comet_persona:
+            # add comet expansions for personality
+            comet_annotations = dialog["coment_annotation"]
+            sent_beams_persona = []
+            for j_s, sent in enumerate(comet_annotations):
+                # logging
+                if d_i == 0 and j_s == 0:
+                    print('For a sent: \n{}'.format(sent['comet']))
+                for effect_name, effect in sent['comet'].items():
+                    # if effect_name in EFFECTS:
+                        # logging
+                        if d_i == 0 and j_s == 0:
+                            print('Getting data for effect {}'.format(effect_name))
+                            print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
+                        sent_beams_persona += effect['beams'][:args.num_beams]
+            if d_i == 0:
+                print('Got {} beams'.format(len(sent_beams_persona)))        
+            grounding_doc += sent_beams_persona
 
-        # add history
-        grounding_doc += utterance['history']
+        if args.history:
+            # add history
+            grounding_doc += utterance['history']
 
-        # add comet expansions of history
-        comet_history = dialog["history_comet_annotation"][:(2*u_i + 1)]
-        sent_beams_history = []
-        for j_s, sent in enumerate(comet_history):
-            # logging
-            if d_i == 0 and j_s == 0:
-                print('For a sent: \n{}'.format(sent['comet']))
-            for effect_name, effect in sent['comet'].items():
-                # if effect_name in EFFECTS:
-                    # logging
-                    if d_i == 0 and j_s == 0:
-                        print('Getting data for effect {}'.format(effect_name))
-                        print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
-                    sent_beams_history += effect['beams'][:args.num_beams]
-        if d_i == 0:
-            print('Got {} beams'.format(len(sent_beams_history)))
-        
-        grounding_doc += sent_beams_history
+        if args.comet_history:
+            # add comet expansions of history
+            comet_history = dialog["history_comet_annotation"][:(2*u_i + 1)]
+            sent_beams_history = []
+            for j_s, sent in enumerate(comet_history):
+                # logging
+                if d_i == 0 and j_s == 0:
+                    print('For a sent: \n{}'.format(sent['comet']))
+                for effect_name, effect in sent['comet'].items():
+                    # if effect_name in EFFECTS:
+                        # logging
+                        if d_i == 0 and j_s == 0:
+                            print('Getting data for effect {}'.format(effect_name))
+                            print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
+                        sent_beams_history += effect['beams'][:args.num_beams]
+            if d_i == 0:
+                print('Got {} beams'.format(len(sent_beams_history)))
+            
+            grounding_doc += sent_beams_history
 
         grounding_doc = ' '.join(grounding_doc)
         grounding_doc = process_text(grounding_doc)
