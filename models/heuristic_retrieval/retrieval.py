@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from tqdm import tqdm
 
 from comet.matching_utils.weak_label_annotations import get_scores, get_recall_scores, process_text
 
@@ -18,7 +19,7 @@ valid_data = personachat['valid']
 
 correct = 0
 ranks = []
-for d_i, dialog in enumerate(valid_data):
+for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
     for u_i, utterance in enumerate(dialog['utterances']):
         grounding_doc = []
         # add personality
