@@ -92,7 +92,12 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
         gt_index = len(candidate_scores) - 1
         candidate_scores = sorted(candidate_scores, key=lambda x: x[1], reverse=True)
         correct += 1 if candidate_scores[0][0] == gt_index else 0
-        ranks.append([cs[0] for cs in candidate_scores].index(gt_index) + 1)
+        curr_rank = [cs[0] for cs in candidate_scores].index(gt_index) + 1
+        if curr_rank > 5:
+            print('Dialog: {}\nUtt: {}\nCandidate: {}\nGD: {}'.format(
+                d_i, u_i, c, grounding_doc))
+            break
+        ranks.append(curr_rank)
         total += 1
 
 print('Total {} utterances retrieved'.format(total))
