@@ -111,7 +111,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
 print('Total {} utterances retrieved'.format(total))
 print('Accuracy: {}'.format(correct / total))
 
-print('Top-3 Accuracy: {}'.format(correct / total))
+print('Top-3 Accuracy: {}'.format(top_3_corr / total))
 
 mrr = sum([1/r for r in ranks])/ len(ranks)
 print('MRR: {}'.format(mrr))
