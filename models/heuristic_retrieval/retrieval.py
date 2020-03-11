@@ -24,6 +24,7 @@ valid_data = personachat['valid']
 correct = 0
 total = 0
 ranks = []
+debug = False
 for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
     for u_i, utterance in enumerate(dialog['utterances']):
         grounding_doc = []
@@ -96,9 +97,12 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
         if curr_rank > 5:
             print('Dialog: {}\nUtt: {}\nCandidate: {}\nGD: {}'.format(
                 d_i, u_i, c, grounding_doc))
+            debug = True
             break
         ranks.append(curr_rank)
         total += 1
+    if debug:
+        break
 
 print('Total {} utterances retrieved'.format(total))
 print('Accuracy: {}'.format(correct / total))
