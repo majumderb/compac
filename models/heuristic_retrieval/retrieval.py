@@ -29,6 +29,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
         grounding_doc = []
         # add personality
         grounding_doc += dialog["personality"]
+        persona_len = len(dialog["personality"])
 
         if args.comet_persona:
             # add comet expansions for personality
@@ -80,8 +81,10 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
         for c_i, c in enumerate(utterance['candidates']):
             c = process_text(c, typ='bigram')
             candiate_doc_scores = []
-            for gd in grounding_doc:
+            for n, gd in enumerate(grounding_doc):
                 score = get_recall_scores(c, gd, 0)['score']
+                if n >= persona_len:
+                    score = 0.8 * score
                 candiate_doc_scores.append(score)
             candidate_scores.append((c_i, max(candiate_doc_scores)))
         
