@@ -73,14 +73,17 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
             
             grounding_doc += sent_beams_history
 
-        grounding_doc = ' '.join(grounding_doc)
-        grounding_doc = process_text(grounding_doc)
+        # grounding_doc = ' '.join(grounding_doc)
+        grounding_doc = [process_text(s) for s in grounding_doc]
 
         candidate_scores = []
         for c_i, c in enumerate(utterance['candidates']):
             c = process_text(c)
-            score = get_recall_scores(c, grounding_doc, 0)
-            candidate_scores.append((c_i, score['score']))
+            candiate_doc_scores = []
+            for gd in grounding_doc:
+                score = get_recall_scores(c, gd, 0)['score']
+                candiate_doc_scores.append(score)
+            candidate_scores.append((c_i, max(candiate_doc_scores)))
         
         gt_index = len(candidate_scores) - 1
         candidate_scores = sorted(candidate_scores, key=lambda x: x[1], reverse=True)
@@ -95,9 +98,9 @@ mrr = sum([1/r for r in ranks])/ len(ranks)
 print('MRR: {}'.format(mrr))
 
 
-        
-
-
+"""
+python3 -m models.heuristic_retrieval.retrieval.py --dataset_path /data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_history_preprocessed_validation.json
+"""
 
 
         
