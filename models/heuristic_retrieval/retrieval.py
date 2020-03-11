@@ -39,17 +39,17 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
             sent_beams_persona = []
             for j_s, sent in enumerate(comet_annotations):
                 # logging
-                if d_i == 0 and j_s == 0:
-                    print('For a sent: \n{}'.format(sent['comet']))
+                # if d_i == 0 and j_s == 0:
+                #     print('For a sent: \n{}'.format(sent['comet']))
                 for effect_name, effect in sent['comet'].items():
                     # if effect_name in EFFECTS:
                         # logging
-                        if d_i == 0 and j_s == 0:
-                            print('Getting data for effect {}'.format(effect_name))
-                            print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
+                        # if d_i == 0 and j_s == 0:
+                        #     print('Getting data for effect {}'.format(effect_name))
+                        #     print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
                         sent_beams_persona += effect['beams'][:args.num_beams]
-            if d_i == 0:
-                print('Got {} beams'.format(len(sent_beams_persona)))        
+            # if d_i == 0:
+                # print('Got {} beams'.format(len(sent_beams_persona)))        
             grounding_doc += sent_beams_persona
 
         if args.history:
@@ -62,17 +62,17 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
             sent_beams_history = []
             for j_s, sent in enumerate(comet_history):
                 # logging
-                if d_i == 0 and j_s == 0:
-                    print('For a sent: \n{}'.format(sent['comet']))
+                # if d_i == 0 and j_s == 0:
+                #     print('For a sent: \n{}'.format(sent['comet']))
                 for effect_name, effect in sent['comet'].items():
                     # if effect_name in EFFECTS:
                         # logging
-                        if d_i == 0 and j_s == 0:
-                            print('Getting data for effect {}'.format(effect_name))
-                            print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
+                        # if d_i == 0 and j_s == 0:
+                        #     print('Getting data for effect {}'.format(effect_name))
+                        #     print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
                         sent_beams_history += effect['beams'][:args.num_beams]
-            if d_i == 0:
-                print('Got {} beams'.format(len(sent_beams_history)))
+            # if d_i == 0:
+                # print('Got {} beams'.format(len(sent_beams_history)))
             
             grounding_doc += sent_beams_history
 
