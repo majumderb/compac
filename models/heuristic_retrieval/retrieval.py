@@ -76,6 +76,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
 
         # grounding_doc = ' '.join(grounding_doc)
         grounding_doc = [process_text(s, typ='bigram') for s in grounding_doc]
+        print('GDs: {}'.format(grounding_doc))
 
         candidate_scores = []
         for c_i, c in enumerate(utterance['candidates']):
