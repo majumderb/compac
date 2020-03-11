@@ -23,6 +23,7 @@ personachat = json.load(open(args.dataset_path))
 valid_data = personachat['valid']
 
 correct = 0
+top_3_corr = 0
 total = 0
 ranks = []
 debug = False
@@ -96,11 +97,12 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
         candidate_scores = sorted(candidate_scores, key=lambda x: x[1], reverse=True)
         correct += 1 if candidate_scores[0][0] == gt_index else 0
         curr_rank = [cs[0] for cs in candidate_scores].index(gt_index) + 1
-        if curr_rank > 5:
-            print('Dialog: {}\nUtt: {}\nCandidate: {}\nGD: {}'.format(
-                d_i, u_i, c, grounding_doc))
-            debug = True
-            break
+        top_3_corr += 1 if curr_rank < 4 else 0
+        # if curr_rank > 3:
+            # print('Dialog: {}\nUtt: {}\nCandidate: {}\nGD: {}'.format(
+                # d_i, u_i, c, grounding_doc))
+            # debug = True
+            # break
         ranks.append(curr_rank)
         total += 1
     if debug:
@@ -108,6 +110,8 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
 
 print('Total {} utterances retrieved'.format(total))
 print('Accuracy: {}'.format(correct / total))
+
+print('Top-3 Accuracy: {}'.format(correct / total))
 
 mrr = sum([1/r for r in ranks])/ len(ranks)
 print('MRR: {}'.format(mrr))
