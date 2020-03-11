@@ -74,11 +74,11 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
             grounding_doc += sent_beams_history
 
         # grounding_doc = ' '.join(grounding_doc)
-        grounding_doc = [process_text(s) for s in grounding_doc]
+        grounding_doc = [process_text(s, typ=='bigram') for s in grounding_doc]
 
         candidate_scores = []
         for c_i, c in enumerate(utterance['candidates']):
-            c = process_text(c)
+            c = process_text(c, typ=='bigram')
             candiate_doc_scores = []
             for gd in grounding_doc:
                 score = get_recall_scores(c, gd, 0)['score']
