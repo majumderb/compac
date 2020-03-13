@@ -98,12 +98,13 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
                     score = get_recall_scores(c, gd, 0)['score']
                     if n >= persona_len:
                         score = 0.8 * score
-                    candiate_doc_scores.append(score)
+                    candiate_doc_scores.append((score, gd))
 
-                candidate_scores.append((c_i, max(candiate_doc_scores)))
+                candidate_doc_scores = sorted(candidate_scores, key=lambda x: x[1], reverse=True)
+                candidate_scores.append((c_i, candiate_doc_scores[0]))
             
             gt_index = len(candidate_scores) - 1
-            candidate_scores = sorted(candidate_scores, key=lambda x: x[1], reverse=True)
+            candidate_scores = sorted(candidate_scores, key=lambda x: x[1][0], reverse=True)
             if itr == 0:
                 itr0 = 1 if candidate_scores[0][0] == gt_index else 0
                 print('Correct Candidate for OG: {} WITH SCORES {}'.format(utterance['candidates'][candidate_scores[0][0]], candidate_scores[0][1]))
