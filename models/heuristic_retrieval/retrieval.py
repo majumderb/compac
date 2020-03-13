@@ -96,7 +96,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
                 c = process_text(c, typ='unigram')
                 candidate_doc_scores = []
                 for n, gd in enumerate(grounding_doc_itr):
-                    score = get_recall_scores(c, gd, 0)['score']
+                    score = get_scores(c, gd, 0)['score']
                     if n >= persona_len:
                         score = 0.8 * score
                     candidate_doc_scores.append((score, gd))
@@ -119,7 +119,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
             print('Dialog: {}\n\nUtt: {}\n\nCandidate: {}\n\nPersona: {}\n\nGD: {}\n'.format(
                 d_i, u_i, utterance['candidates'][-1], og_persona, grounding_doc))
             # debug = True
-            break
+            # break
 
         correct += 1 if candidate_scores[0][0] == gt_index else 0
         curr_rank = [cs[0] for cs in candidate_scores].index(gt_index) + 1
