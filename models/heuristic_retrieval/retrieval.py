@@ -142,6 +142,7 @@ print('Top-3 Accuracy: {}'.format(top_3_corr / total))
 mrr = sum([1/r for r in ranks])/ len(ranks)
 print('MRR: {}'.format(mrr))
 
+print(good)
 
 """
 python3 -m models.heuristic_retrieval.retrieval.py --dataset_path /data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_history_preprocessed_validation.json
