@@ -85,6 +85,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
         itr_0 = 0
         itr_1 = 0
         for itr in range(2):
+            print(itr)
             if itr == 0:
                 grounding_doc = og_persona
             elif itr == 1:
