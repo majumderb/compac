@@ -85,7 +85,6 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
         itr_0 = 0
         itr_1 = 0
         for itr in range(2):
-            print(itr)
             if itr == 0:
                 grounding_doc = og_persona
             elif itr == 1:
@@ -110,7 +109,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
             elif itr == 1:
                 itr1 = 1 if candidate_scores[0][0] == gt_index else 0
 
-
+        print('For OG: {}\t For Comet: {}'.format(itr0, itr1))
         if itr0 == 1 and itr1 == 0:
             print('Dialog: {}\nUtt: {}\nCandidate: {}Persona: {}\nGD: {}\n'.format(
                 d_i, u_i, utterance['candidates'][-1], og_persona, grounding_doc))
