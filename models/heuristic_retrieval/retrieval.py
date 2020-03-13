@@ -100,7 +100,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
                         score = 0.8 * score
                     candiate_doc_scores.append((score, gd))
 
-                candidate_doc_scores = sorted(candidate_scores, key=lambda x: x[1], reverse=True)
+                candidate_doc_scores = sorted(candidate_scores, key=lambda x: x[0], reverse=True)
                 candidate_scores.append((c_i, candiate_doc_scores[0]))
             
             gt_index = len(candidate_scores) - 1
