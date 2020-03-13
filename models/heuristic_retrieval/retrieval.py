@@ -113,7 +113,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
 
         print('For OG: {}\t For Comet: {}'.format(itr0, itr1))
         if itr0 == 1 and itr1 == 0:
-            print('Dialog: {}\nUtt: {}\nCandidate: {}Persona: {}\nGD: {}\n'.format(
+            print('Dialog: {}\n\nUtt: {}\n\nCandidate: {}\n\nPersona: {}\n\nGD: {}\n'.format(
                 d_i, u_i, utterance['candidates'][-1], og_persona, grounding_doc))
             debug = True
             break
