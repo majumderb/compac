@@ -116,7 +116,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
         if itr0 == 1 and itr1 == 0:
             print('Dialog: {}\n\nUtt: {}\n\nCandidate: {}\n\nPersona: {}\n\nGD: {}\n'.format(
                 d_i, u_i, utterance['candidates'][-1], og_persona, grounding_doc))
-            debug = True
+            # debug = True
             break
 
         correct += 1 if candidate_scores[0][0] == gt_index else 0
