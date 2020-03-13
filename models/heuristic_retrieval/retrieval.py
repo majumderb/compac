@@ -93,15 +93,15 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
             candidate_scores = []
             for c_i, c in enumerate(utterance['candidates']):
                 c = process_text(c, typ='unigram')
-                candiate_doc_scores = []
+                candidate_doc_scores = []
                 for n, gd in enumerate(grounding_doc_itr):
                     score = get_recall_scores(c, gd, 0)['score']
                     if n >= persona_len:
                         score = 0.8 * score
-                    candiate_doc_scores.append((score, gd))
+                    candidate_doc_scores.append((score, gd))
 
                 candidate_doc_scores = sorted(candidate_doc_scores, key=lambda x: x[0], reverse=True)
-                candidate_scores.append((c_i, candiate_doc_scores[0]))
+                candidate_scores.append((c_i, candidate_doc_scores[0]))
             
             gt_index = len(candidate_scores) - 1
             candidate_scores = sorted(candidate_scores, key=lambda x: x[1][0], reverse=True)
