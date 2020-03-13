@@ -110,7 +110,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
                 print('Correct Candidate for OG: {} WITH SCORES {}'.format(process_text(utterance['candidates'][candidate_scores[0][0]]), candidate_scores[0][1]))
             elif itr == 1:
                 itr1 = 1 if candidate_scores[0][0] == gt_index else 0
-                print('Correct Candidate for Comet: {} WITH SCORES {}'.format(process(utterance['candidates'][candidate_scores[0][0]]), candidate_scores[0][1]))
+                print('Correct Candidate for Comet: {} WITH SCORES {}'.format(process_text(utterance['candidates'][candidate_scores[0][0]]), candidate_scores[0][1]))
 
         print('For OG: {}\t For Comet: {}'.format(itr0, itr1))
         if itr0 == 1 and itr1 == 0:
