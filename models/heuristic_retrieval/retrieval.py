@@ -95,7 +95,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
                 c = process_text(c, typ='unigram')
                 candiate_doc_scores = []
                 for n, gd in enumerate(grounding_doc_itr):
-                    score = get_scores(c, gd, 0)['score']
+                    score = get_recall_scores(c, gd, 0)['score']
                     if n >= persona_len:
                         score = 0.8 * score
                     candiate_doc_scores.append(score)
