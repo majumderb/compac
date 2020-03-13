@@ -106,8 +106,10 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
             candidate_scores = sorted(candidate_scores, key=lambda x: x[1], reverse=True)
             if itr == 0:
                 itr0 = 1 if candidate_scores[0][0] == gt_index else 0
+                print('OG score: {}'.format(candidate_scores[0][0]))
             elif itr == 1:
                 itr1 = 1 if candidate_scores[0][0] == gt_index else 0
+                print('Comet score: {}'.format(candidate_scores[0][0]))
 
         print('For OG: {}\t For Comet: {}'.format(itr0, itr1))
         if itr0 == 1 and itr1 == 0:
