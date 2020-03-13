@@ -27,6 +27,7 @@ top_3_corr = 0
 total = 0
 ranks = []
 debug = False
+good = 0
 for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
     for u_i, utterance in enumerate(dialog['utterances']):
         grounding_doc = []
@@ -114,6 +115,7 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
 
         print('For OG: {}\t For Comet: {}'.format(itr0, itr1))
         if itr0 == 0 and itr1 == 1:
+            good += 1
             print('Dialog: {}\n\nUtt: {}\n\nCandidate: {}\n\nPersona: {}\n\nGD: {}\n'.format(
                 d_i, u_i, utterance['candidates'][-1], og_persona, grounding_doc))
             # debug = True
