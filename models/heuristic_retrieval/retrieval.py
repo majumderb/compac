@@ -113,10 +113,10 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
                 print('Correct Candidate for Comet: {} WITH SCORES {}'.format(process_text(utterance['candidates'][candidate_scores[0][0]]), candidate_scores[0][1]))
 
         print('For OG: {}\t For Comet: {}'.format(itr0, itr1))
-        if itr0 == 1 and itr1 == 0:
+        if itr0 == 0 and itr1 == 1:
             print('Dialog: {}\n\nUtt: {}\n\nCandidate: {}\n\nPersona: {}\n\nGD: {}\n'.format(
                 d_i, u_i, utterance['candidates'][-1], og_persona, grounding_doc))
-            # debug = True
+            debug = True
             break
 
         correct += 1 if candidate_scores[0][0] == gt_index else 0
