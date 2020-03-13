@@ -86,15 +86,15 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
         itr_1 = 0
         for itr in range(2):
             if itr == 0:
-                grounding_doc = og_persona
+                grounding_doc_itr = og_persona
             elif itr == 1:
-                grounding_doc = grounding_doc
+                grounding_doc_itr = grounding_doc
 
             candidate_scores = []
             for c_i, c in enumerate(utterance['candidates']):
                 c = process_text(c, typ='unigram')
                 candiate_doc_scores = []
-                for n, gd in enumerate(grounding_doc):
+                for n, gd in enumerate(grounding_doc_itr):
                     score = get_scores(c, gd, 0)['score']
                     if n >= persona_len:
                         score = 0.8 * score
