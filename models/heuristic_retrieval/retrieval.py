@@ -81,20 +81,40 @@ for d_i, dialog in tqdm(enumerate(valid_data), total=len(valid_data)):
         grounding_doc = [process_text(s, typ='unigram') for s in grounding_doc]
         # print('GDs: {}'.format(len(grounding_doc)))
 
-        candidate_scores = []
-        for c_i, c in enumerate(utterance['candidates']):
-            c = process_text(c, typ='unigram')
-            candiate_doc_scores = []
-            for n, gd in enumerate(grounding_doc):
-                score = get_scores(c, gd, 0)['score']
-                if n >= persona_len:
-                    score = 0.8 * score
-                candiate_doc_scores.append(score)
+        og_persona = [process_text(s, typ='unigram') for s in dialog["personality"]]
+        itr_0 = 0
+        itr_1 = 0
+        for itr in range(2):
+            if itr == 0:
+                grounding_doc = og_persona
+            elif itr == 1:
+                grounding_doc = grounding_doc
 
-            candidate_scores.append((c_i, max(candiate_doc_scores)))
-        
-        gt_index = len(candidate_scores) - 1
-        candidate_scores = sorted(candidate_scores, key=lambda x: x[1], reverse=True)
+            candidate_scores = []
+            for c_i, c in enumerate(utterance['candidates']):
+                c = process_text(c, typ='unigram')
+                candiate_doc_scores = []
+                for n, gd in enumerate(grounding_doc):
+                    score = get_scores(c, gd, 0)['score']
+                    if n >= persona_len:
+                        score = 0.8 * score
+                    candiate_doc_scores.append(score)
+
+                candidate_scores.append((c_i, max(candiate_doc_scores)))
+            
+            gt_index = len(candidate_scores) - 1
+            candidate_scores = sorted(candidate_scores, key=lambda x: x[1], reverse=True)
+            if itr == 0:
+                itr0 = 1 if candidate_scores[0][0] == gt_index else 0
+            elif itr == 1:
+                itr1 = 1 if candidate_scores[0][0] == gt_index else 0
+
+
+        if itr0 == 1 and itr1 == 0:
+            print('Dialog: {}\nUtt: {}\nCandidate: {}Persona: {}\nGD: {}\n'.format(
+                d_i, u_i, utterance['candidates'][-1], og_persona, grounding_doc))
+            break
+
         correct += 1 if candidate_scores[0][0] == gt_index else 0
         curr_rank = [cs[0] for cs in candidate_scores].index(gt_index) + 1
         top_3_corr += 1 if curr_rank < 4 else 0
