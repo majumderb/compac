@@ -33,9 +33,9 @@ def build_input_from_segments(persona, history, reply, tokenizer, lm_labels=Fals
     sequence = [[bos] + list(chain(*persona))[:PERSONA_MAX_LENGTH]] + history + [reply + ([eos] if with_eos else [])]
     sequence = [sequence[0]] + [[speaker2 if (len(sequence)-i) % 2 else speaker1] + s for i, s in enumerate(sequence[1:])]
     instance = {}
-    print('\nseq', sequence)
-    print('\npersona', persona)
-    print('\nhistory', history)
+    # print('\nseq', sequence)
+    # print('\npersona', persona)
+    # print('\nhistory', history)
     instance["persona"] = [[ROBERTA_START] + p  for p in persona]
     # instance["persona_length"] = [len(p) for p in instance["persona"]]
     instance["history"] = [ROBERTA_START] + list(chain(*history))
@@ -125,12 +125,15 @@ class PersonaChatDataset(Dataset):
                     for j, candidate in enumerate(utterance["candidates"][-num_candidates:]):
                         lm_labels = bool(j == num_candidates-1)
                         instance = build_input_from_segments(persona, history, candidate, tokenizer, lm_labels)
-                        print('instance: {}'.format(instance))
+                        # print('instance: {}'.format(instance))
                         for input_name, input_array in instance.items():
                             self.datasets[split][input_name].append(input_array)
                     self.datasets[split]["mc_labels"].append(num_candidates - 1)
                     self.datasets[split]["n_candidates"] = num_candidates
                 # persona = [persona[-1]] + persona[:-1]  # permuted personalities
+        
+        print('\n\n====\n\n')
+        print(self.datasets[self.split])
 
     def _sample(self, n=1):
         """
