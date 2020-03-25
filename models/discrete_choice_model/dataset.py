@@ -121,6 +121,7 @@ class PersonaChatDataset(Dataset):
                 if args.no_persona:
                     persona = [[]]
                 for i, utterance in enumerate(dialog["utterances"]):
+                    print(i)
                     history = utterance["history"][-(2*args.max_history+1):]
                     for j, candidate in enumerate(utterance["candidates"][-num_candidates:]):
                         lm_labels = bool(j == num_candidates-1)
@@ -131,9 +132,6 @@ class PersonaChatDataset(Dataset):
                     self.datasets[split]["mc_labels"].append(num_candidates - 1)
                     self.datasets[split]["n_candidates"] = num_candidates
                 # persona = [persona[-1]] + persona[:-1]  # permuted personalities
-        
-        print('\n\n====\n\n')
-        print(self.datasets[self.split])
 
     def _sample(self, n=1):
         """
@@ -148,9 +146,10 @@ class PersonaChatDataset(Dataset):
 
         item = []
         for name in self.datasets[self.split].keys():
-            print(name)
-            print()
-            item.append(self.datasets[self.split][name][index])
+            if name != 'n_candidates':
+                item.append(self.datasets[self.split][name][index])
+            elif name == 'n_candidates':
+                item.append(self.datasets[self.split][name])
         
         return item
 
