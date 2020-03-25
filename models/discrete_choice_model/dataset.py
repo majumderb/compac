@@ -81,6 +81,7 @@ class PersonaChatDataset(Dataset):
         super().__init__()
 
         self.split = split
+        self.length = 0
 
         personachat = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
         print("Build inputs and labels for {}".format(split))
@@ -127,10 +128,12 @@ class PersonaChatDataset(Dataset):
                         lm_labels = bool(j == num_candidates-1)
                         instance = build_input_from_segments(persona, history, candidate, tokenizer, lm_labels)
                         # print('instance: {}'.format(instance))
+                        print('candidate count: {}'.format(candidate))
                         for input_name, input_array in instance.items():
                             self.datasets[split][input_name].append(input_array)
                     self.datasets[split]["mc_labels"].append(num_candidates - 1)
                     self.datasets[split]["n_candidates"] = num_candidates
+                    self.length += 1 
                 # persona = [persona[-1]] + persona[:-1]  # permuted personalities
 
     def _sample(self, n=1):
@@ -143,6 +146,16 @@ class PersonaChatDataset(Dataset):
         return len(self.datasets[self.split])
 
     def __getitem__(self, index):
+        '''
+        persona
+        history
+        input_ids
+        token_type_ids
+        mc_token_ids
+        lm_labels
+        mc_labels
+        n_candidates
+        '''
 
         item = []
         for name in self.datasets[self.split].keys():
