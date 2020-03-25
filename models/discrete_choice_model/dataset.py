@@ -44,116 +44,26 @@ def build_input_from_segments(persona, history, reply, tokenizer, lm_labels=Fals
         instance["lm_labels"] = ([-100] * sum(len(s) for s in sequence[:-1])) + [-100] + sequence[-1][1:]
     return instance
 
+    # print("Pad inputs and convert to Tensor")
+    # tensor_datasets = {"train": [], "valid": []}
+    # for dataset_name, dataset in datasets.items():
+    #     dataset = pad_dataset(dataset, padding=tokenizer.convert_tokens_to_ids(SPECIAL_TOKENS[-1]))
+    #     for input_name in MODEL_INPUTS:
+    #         tensor = torch.tensor(dataset[input_name])
+    #         if input_name != "mc_labels":
+    #             tensor = tensor.view((-1, datasets[dataset_name]["n_candidates"]) + tensor.shape[1:])
+    #         tensor_datasets[dataset_name].append(tensor)
 
-def get_data_loaders(args, tokenizer):
-    """ Prepare the dataset for training and evaluation """
-    personachat = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
+    # print("Build train and validation dataloaders")
+    # train_dataset, valid_dataset = TensorDataset(*tensor_datasets["train"]), TensorDataset(*tensor_datasets["valid"])
+    # train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset) if args.distributed else None
+    # valid_sampler = torch.utils.data.distributed.DistributedSampler(valid_dataset) if args.distributed else None
+    # train_loader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size, shuffle=(not args.distributed))
+    # valid_loader = DataLoader(valid_dataset, sampler=valid_sampler, batch_size=args.valid_batch_size, shuffle=False)
 
-    print("Build inputs and labels")
-    datasets = {"train": defaultdict(list), "valid": defaultdict(list)}
-    for dataset_name, dataset in personachat.items():
-        print('Loading {} set.'.format(dataset_name))
-        num_candidates = len(dataset[0]["utterances"][0]["candidates"])
-        if args.num_candidates > 0 and dataset_name == 'train':
-            num_candidates = min(args.num_candidates, num_candidates)
-        
-        if args.test_run_num > 0:
-            dataset = dataset[:args.test_run_num]
-
-        for d_i, dialog in enumerate(dataset):
-            persona = dialog["personality"].copy()
-            if not args.no_comet_persona:
-                comet_annotations = dialog["coment_annotation"]
-                sent_beams = []
-                for j_s, sent in enumerate(comet_annotations):
-                    # logging
-                    if d_i == 0 and j_s == 0:
-                        print('For a sent: \n{}'.format(sent['comet']))
-                    for effect_name, effect in sent['comet'].items():
-                        # if effect_name in EFFECTS:
-                            # logging
-                            if d_i == 0 and j_s == 0:
-                                print('Getting data for effect {}'.format(effect_name))
-                                print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
-                            sent_beams += effect['beams'][:args.num_beams]
-                if d_i == 0:
-                    print('Got {} beams'.format(len(sent_beams)))        
-                # persona += sent_beams
-            
-            for perm in range(args.personality_permutations):
-                if args.no_persona:
-                    refactored_persona = [[]]
-                for i, utterance in enumerate(dialog["utterances"]):
-                    weak_label = dialog["weak_labels"][2*i + 1]
-                    if not args.no_comet_persona:
-                        weak_label_comet = dialog["weak_labels_comet"][2*i + 1]
-                    # making sure we are getting the weak labels for correct utterance
-                    if weak_label["sentence"] != utterance["candidates"][-1] and weak_label_comet["sentence"] != utterance["candidates"][-1]:
-                        print('ERROR!')
-                        print(weak_label["sentence"])
-                        print(utterance["candidates"][-1])
-
-                    # collect persona weak labels
-                    persona_labels = []
-                    if len(weak_label["label_persona"]) > 0:
-                        for l in weak_label["label_persona"]:
-                            persona_labels.append(l["idx"])
-
-                    # refactor persona for the first time
-                    refactored_persona = [persona[k] for k in persona_labels]
-                    if len(refactored_persona) == 0:
-                        refactored_persona = [[]]
-
-                    if not args.no_comet_persona:
-                        refactored_comet_persona = []
-                        if len(weak_label["label_persona"]) > 0:
-                            for match in weak_label_comet["label_persona"]:
-                                comet_for_sent = comet_annotations[match[0]["persona_sent_id"]]['comet']
-                                refactored_comet_persona.append(comet_for_sent[match[0]["comet_key"]]["beams"][match[0]["beam_id"]])
-                        
-                        refactored_persona += refactored_comet_persona
-                    
-                    # permute turn specific refactored persona
-                    for _ in range(perm):
-                        refactored_persona = [refactored_persona[-1]] + refactored_persona[:-1]
-
-                    # logging for first dialog
-                    if d_i == 0:
-                        print('Original Persona: {}'.format(persona))
-                        print('Weak labels for {}-th persona speaker turn: {}'.format(i, persona_labels))
-                        print('Refactored persona for {}-th persona speaker turn: {}'.format(i, refactored_persona))
-
-                    history = utterance["history"][-(2*args.max_history+1):]
-                    for j, candidate in enumerate(utterance["candidates"][-num_candidates:]):
-                        lm_labels = bool(j == num_candidates-1)
-                        instance = build_input_from_segments(refactored_persona, history, candidate, tokenizer, lm_labels)
-                        print('instance: {}'.format(instance))
-                        for input_name, input_array in instance.items():
-                            datasets[dataset_name][input_name].append(input_array)
-                    datasets[dataset_name]["mc_labels"].append(num_candidates - 1)
-                    datasets[dataset_name]["n_candidates"] = num_candidates
-                # persona = [persona[-1]] + persona[:-1]  # permuted personalities
-
-    print("Pad inputs and convert to Tensor")
-    tensor_datasets = {"train": [], "valid": []}
-    for dataset_name, dataset in datasets.items():
-        dataset = pad_dataset(dataset, padding=tokenizer.convert_tokens_to_ids(SPECIAL_TOKENS[-1]))
-        for input_name in MODEL_INPUTS:
-            tensor = torch.tensor(dataset[input_name])
-            if input_name != "mc_labels":
-                tensor = tensor.view((-1, datasets[dataset_name]["n_candidates"]) + tensor.shape[1:])
-            tensor_datasets[dataset_name].append(tensor)
-
-    print("Build train and validation dataloaders")
-    train_dataset, valid_dataset = TensorDataset(*tensor_datasets["train"]), TensorDataset(*tensor_datasets["valid"])
-    train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset) if args.distributed else None
-    valid_sampler = torch.utils.data.distributed.DistributedSampler(valid_dataset) if args.distributed else None
-    train_loader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size, shuffle=(not args.distributed))
-    valid_loader = DataLoader(valid_dataset, sampler=valid_sampler, batch_size=args.valid_batch_size, shuffle=False)
-
-    print("Train dataset (Batch, Candidates, Seq length): {}".format(train_dataset.tensors[0].shape))
-    print("Valid dataset (Batch, Candidates, Seq length): {}".format(valid_dataset.tensors[0].shape))
-    return train_loader, valid_loader, train_sampler, valid_sampler
+    # print("Train dataset (Batch, Candidates, Seq length): {}".format(train_dataset.tensors[0].shape))
+    # print("Valid dataset (Batch, Candidates, Seq length): {}".format(valid_dataset.tensors[0].shape))
+    # return train_loader, valid_loader, train_sampler, valid_sampler
 
 class PersonaChatDataset(Dataset):
     def __init__(
@@ -200,55 +110,16 @@ class PersonaChatDataset(Dataset):
                             sent_beams += effect['beams'][:args.num_beams]
                 if d_i == 0:
                     print('Got {} beams'.format(len(sent_beams)))        
-                # persona += sent_beams
+                persona += sent_beams
             
             for perm in range(args.personality_permutations):
                 if args.no_persona:
-                    refactored_persona = [[]]
+                    persona = [[]]
                 for i, utterance in enumerate(dialog["utterances"]):
-                    weak_label = dialog["weak_labels"][2*i + 1]
-                    if not args.no_comet_persona:
-                        weak_label_comet = dialog["weak_labels_comet"][2*i + 1]
-                    # making sure we are getting the weak labels for correct utterance
-                    if weak_label["sentence"] != utterance["candidates"][-1] and weak_label_comet["sentence"] != utterance["candidates"][-1]:
-                        print('ERROR!')
-                        print(weak_label["sentence"])
-                        print(utterance["candidates"][-1])
-
-                    # collect persona weak labels
-                    persona_labels = []
-                    if len(weak_label["label_persona"]) > 0:
-                        for l in weak_label["label_persona"]:
-                            persona_labels.append(l["idx"])
-
-                    # refactor persona for the first time
-                    refactored_persona = [persona[k] for k in persona_labels]
-                    if len(refactored_persona) == 0:
-                        refactored_persona = [[]]
-
-                    if not args.no_comet_persona:
-                        refactored_comet_persona = []
-                        if len(weak_label["label_persona"]) > 0:
-                            for match in weak_label_comet["label_persona"]:
-                                comet_for_sent = comet_annotations[match[0]["persona_sent_id"]]['comet']
-                                refactored_comet_persona.append(comet_for_sent[match[0]["comet_key"]]["beams"][match[0]["beam_id"]])
-                        
-                        refactored_persona += refactored_comet_persona
-                    
-                    # permute turn specific refactored persona
-                    for _ in range(perm):
-                        refactored_persona = [refactored_persona[-1]] + refactored_persona[:-1]
-
-                    # logging for first dialog
-                    if d_i == 0:
-                        print('Original Persona: {}'.format(persona))
-                        print('Weak labels for {}-th persona speaker turn: {}'.format(i, persona_labels))
-                        print('Refactored persona for {}-th persona speaker turn: {}'.format(i, refactored_persona))
-
                     history = utterance["history"][-(2*args.max_history+1):]
                     for j, candidate in enumerate(utterance["candidates"][-num_candidates:]):
                         lm_labels = bool(j == num_candidates-1)
-                        instance = build_input_from_segments(refactored_persona, history, candidate, tokenizer, lm_labels)
+                        instance = build_input_from_segments(persona, history, candidate, tokenizer, lm_labels)
                         print('instance: {}'.format(instance))
                         for input_name, input_array in instance.items():
                             self.datasets[split][input_name].append(input_array)
@@ -307,3 +178,16 @@ if __name__ == "__main__":
         json.dump(dataset, outfile)
     
     print('File saved.')
+
+
+'''
+from models.discrete_choice_model.dataset import PersonaChatDataset
+from transformers import GPT2Tokenizer
+tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+import torch
+args = torch.load('/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/Mar03_00-35-44_deepyeti_gpt2test/model_training_args.bin')
+args.dataset_cache = 'persona_comet_weak_label_preprocessed'
+args.personality_permutations = 1
+args.dataset_path='/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json'
+args.no_comet_persona=True
+'''
