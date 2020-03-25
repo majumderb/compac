@@ -49,11 +49,11 @@ class LatentMarginalizedModel(nn.module):
     def forward(self, batch):
         '''
         persona: B x P x T
-        input_ids: B x P x T
+        input_ids: B x P x C x T
         mc_token_ids:
-        lm_labels: B x P x T
-        mc_labels:
-        token_type_ids: B x P x T 
+        lm_labels: B x P x C x T
+        mc_labels: B
+        token_type_ids: B x P x C x T 
         '''
 
         input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids, persona = batch

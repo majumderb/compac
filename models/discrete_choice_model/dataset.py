@@ -86,19 +86,19 @@ class PersonaChatDataset(Dataset):
         personachat = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
         print("Build inputs and labels for {}".format(split))
 
-        self.datasets = {split: defaultdict(list)}
+        self.dataset = defaultdict(list)
         # for dataset_name, dataset in personachat.items():
-        dataset = personachat[split]
+        personachat_split = personachat[split]
         num_candidates = len(dataset[0]["utterances"][0]["candidates"])
         if args.num_candidates > 0 and split == 'train':
             num_candidates = min(args.num_candidates, num_candidates)
         
         if args.test_run_num > 0:
-            dataset = dataset[:args.test_run_num]
+            personachat_split = personachat_split[:args.test_run_num]
         
-        print('Restricted to {} dialogs'.format(len(dataset)))
+        print('Restricted to {} dialogs'.format(len(personachat_split)))
 
-        for d_i, dialog in enumerate(dataset):
+        for d_i, dialog in enumerate(personachat_split):
             persona = dialog["personality"].copy()
             if not args.no_comet_persona:
                 comet_annotations = dialog["coment_annotation"]
@@ -128,11 +128,11 @@ class PersonaChatDataset(Dataset):
                         lm_labels = bool(j == num_candidates-1)
                         instance = build_input_from_segments(persona, history, candidate, tokenizer, lm_labels)
                         # print('instance: {}'.format(instance))
-                        print('candidate count: {}'.format(candidate))
+                        print('candidate count: {}'.format(j))
                         for input_name, input_array in instance.items():
-                            self.datasets[split][input_name].append(input_array)
-                    self.datasets[split]["mc_labels"].append(num_candidates - 1)
-                    self.datasets[split]["n_candidates"] = num_candidates
+                            self.dataset[input_name].append(input_array)
+                    self.dataset["mc_labels"].append(num_candidates - 1)
+                    self.dataset["n_candidates"] = num_candidates
                     self.length += 1 
                 # persona = [persona[-1]] + persona[:-1]  # permuted personalities
 
@@ -140,10 +140,10 @@ class PersonaChatDataset(Dataset):
         """
         For debugging purposes. Samples random turns
         """
-        return [self[i] for i in np.random.choice(len(self.datasets[self.split]), n, replace=False)]
+        return [self[i] for i in np.random.choice(len(self.dataset), n, replace=False)]
 
     def __len__(self):
-        return len(self.datasets[self.split])
+        return self.length
 
     def __getitem__(self, index):
         '''
@@ -157,14 +157,17 @@ class PersonaChatDataset(Dataset):
         n_candidates
         '''
 
-        item = []
-        for name in self.datasets[self.split].keys():
-            if name != 'n_candidates':
-                item.append(self.datasets[self.split][name][index])
+        items = []
+        for name in self.dataset.keys():
+            if name not in ['n_candidates', 'mc_labels']:
+                item = [self.dataset[name][index*self.dataset['n_candidates']:(index+1)*self.dataset['n_candidates']]]
+                items.append(item)
+            elif name == 'mc_labesl':
+                items.append(self.dataset[name][index])
             elif name == 'n_candidates':
-                item.append(self.datasets[self.split][name])
+                items.append(self.datasets[name])
         
-        return item
+        return items
 
 # def collate_dialog(batch):
 #     return batch
