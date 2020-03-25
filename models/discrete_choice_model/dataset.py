@@ -33,7 +33,9 @@ def build_input_from_segments(persona, history, reply, tokenizer, lm_labels=Fals
     sequence = [[bos] + list(chain(*persona))[:PERSONA_MAX_LENGTH]] + history + [reply + ([eos] if with_eos else [])]
     sequence = [sequence[0]] + [[speaker2 if (len(sequence)-i) % 2 else speaker1] + s for i, s in enumerate(sequence[1:])]
     instance = {}
-    instance["persona"] = [[ROBERTA_START] + p  for p in list(chain(*persona))]
+    print('\nseq', sequence)
+    print('\npersona', persona)
+    instance["persona"] = [[ROBERTA_START] + p  for p in persona]
     instance["persona_length"] = [len(p) for p in instance["persona"]]
     instance["history"] = [ROBERTA_START] + history
     instance["input_ids"] = list(chain(*sequence))
@@ -190,4 +192,5 @@ args.dataset_cache = 'persona_comet_weak_label_preprocessed'
 args.personality_permutations = 1
 args.dataset_path='/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json'
 args.no_comet_persona=True
+dataset = PersonaChatDataset(args, tokenizer, split='train')
 '''
