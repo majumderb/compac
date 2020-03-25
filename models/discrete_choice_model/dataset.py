@@ -165,7 +165,7 @@ class PersonaChatDataset(Dataset):
             elif name == 'mc_labesl':
                 items.append(self.dataset[name][index])
             elif name == 'n_candidates':
-                items.append(self.datasets[name])
+                items.append(self.dataset[name])
         
         return items
 
