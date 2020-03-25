@@ -35,9 +35,10 @@ def build_input_from_segments(persona, history, reply, tokenizer, lm_labels=Fals
     instance = {}
     print('\nseq', sequence)
     print('\npersona', persona)
+    print('\nhistory', history)
     instance["persona"] = [[ROBERTA_START] + p  for p in persona]
-    instance["persona_length"] = [len(p) for p in instance["persona"]]
-    instance["history"] = [ROBERTA_START] + history
+    # instance["persona_length"] = [len(p) for p in instance["persona"]]
+    instance["history"] = [ROBERTA_START] + list(chain(*history))
     instance["input_ids"] = list(chain(*sequence))
     instance["token_type_ids"] = [speaker2 if i % 2 else speaker1 for i, s in enumerate(sequence) for _ in s]
     instance["mc_token_ids"] = len(instance["input_ids"]) - 1
@@ -146,6 +147,9 @@ class PersonaChatDataset(Dataset):
         
         return item
 
+# def collate_dialog(batch):
+#     return batch
+
 
 def preprocess_comet_dataset(dataset_path):
     with open(dataset_path, "r+", encoding="utf-8") as f:
@@ -183,9 +187,10 @@ if __name__ == "__main__":
 
 
 '''
-from models.discrete_choice_model.dataset import PersonaChatDataset
+from models.discrete_choice_model.dataset import PersonaChatDataset, ATTR_TO_SPECIAL_TOKEN
 from transformers import GPT2Tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+tokenizer.add_special_tokens(ATTR_TO_SPECIAL_TOKEN)
 import torch
 args = torch.load('/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/Mar03_00-35-44_deepyeti_gpt2test/model_training_args.bin')
 args.dataset_cache = 'persona_comet_weak_label_preprocessed'
