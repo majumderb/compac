@@ -89,7 +89,7 @@ class PersonaChatDataset(Dataset):
         self.dataset = defaultdict(list)
         # for dataset_name, dataset in personachat.items():
         personachat_split = personachat[split]
-        num_candidates = len(dataset[0]["utterances"][0]["candidates"])
+        num_candidates = len(personachat_split[0]["utterances"][0]["candidates"])
         if args.num_candidates > 0 and split == 'train':
             num_candidates = min(args.num_candidates, num_candidates)
         
