@@ -94,6 +94,8 @@ class PersonaChatDataset(Dataset):
         
         if args.test_run_num > 0:
             dataset = dataset[:args.test_run_num]
+        
+        print('Restricted to {} dialogs'.format(len(dataset)))
 
         for d_i, dialog in enumerate(dataset):
             persona = dialog["personality"].copy()
@@ -143,6 +145,8 @@ class PersonaChatDataset(Dataset):
 
         item = []
         for name in self.datasets[self.split].keys():
+            print(name)
+            print()
             item.append(self.datasets[self.split][name][index])
         
         return item
@@ -198,4 +202,5 @@ args.personality_permutations = 1
 args.dataset_path='/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json'
 args.no_comet_persona=True
 dataset = PersonaChatDataset(args, tokenizer, split='train')
+batch = dataset._sample(2)
 '''
