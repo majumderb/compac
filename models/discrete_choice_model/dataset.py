@@ -128,8 +128,8 @@ class PersonaChatDataset(Dataset):
                         print('candidate count: {}'.format(j))
                         for input_name, input_array in instance.items():
                             self.dataset[input_name].append(input_array)
-                    self.dataset["persona"] = [[ROBERTA_START] + p  for p in persona]
-                    self.dataset["history"] = [ROBERTA_START] + list(chain(*history))
+                    self.dataset["persona"].append([[ROBERTA_START] + p  for p in persona])
+                    self.dataset["history"].append([ROBERTA_START] + list(chain(*history)))
                     self.dataset["mc_labels"].append(num_candidates - 1)
                     self.dataset["n_candidates"] = num_candidates
                     self.length += 1 
@@ -163,18 +163,41 @@ class PersonaChatDataset(Dataset):
                 items.append(item)
             elif name == 'mc_labels':
                 items.append(self.dataset[name][index])
-            elif name == 'n_candidates':
-                items.append(self.dataset[name])
         
-        input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels, n_candidates = items
+        input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels = items
 
-        return input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels, n_candidates
+        return input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels
 
 def collate_dialog(batch):
     '''
     Padding and Collating
     '''
-    input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels, n_candidates = zip(*batch)
+    input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels = zip(*batch)
+
+    max_seq_len = 0
+    for input in input_ids:
+        for c in input[0]:
+            max_seq_len = max(max_seq_len, len(c))
+
+    padded_input_ids = torch.LongTensor([
+        [c + [0]*(max_seq_len - len(c)) for c in seq[0]]
+        for seq in input_ids])
+
+    padded_token_type_ids = torch.LongTensor([
+        [c + [0]*(max_seq_len - len(c)) for c in seq[0]]
+        for seq in token_type_ids])
+    
+    padded_lm_labels = torch.LongTensor([
+        [c + [-100]*(max_seq_len - len(c)) for c in seq[0]]
+        for seq in lm_labels])
+
+    mc_token_ids = torch.LongTensor(mc_token_ids).sequeeze(1)
+    mc_labels = torch.LongTensor(mc_labels)
+
+    max_persona_len = 
+    padded_persona = 
+
+
 
     return batch
 
@@ -227,4 +250,14 @@ args.dataset_path='/data2/bodhi/data/personachat/weak_label_comet_personachat/pe
 args.no_comet_persona=True
 dataset = PersonaChatDataset(args, tokenizer, split='train')
 batch = dataset._sample(2)
+
+
+max_seq_len = 0
+for input in input_ids:
+    for c in input[0]:
+        max_seq_len = max(max_seq_len, len(c))
+
+padded_input_ids = [[c + [0]*(max_seq_len - len(c)) for c in input[0]] for input in input_ids]
+
+
 '''
