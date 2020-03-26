@@ -197,9 +197,6 @@ def collate_dialog(batch):
     mc_labels = torch.LongTensor(mc_labels)
 
     max_persona_len = 0
-    for b in 
-
-
 
     return batch
 
