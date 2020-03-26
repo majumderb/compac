@@ -170,12 +170,14 @@ class PersonaChatDataset(Dataset):
                 items.append(item)
             elif name  == 'mc_labels':
                 items.append(self.dataset[name][index*MAX_NUM_PERSONA:(index+1)*MAX_NUM_PERSONA])
-            elif name in ['persona', 'history', 'n_candidates']:
+            elif name in ['persona', 'history']:
                 items.append(self.dataset[name][index])
+            elif name == 'n_candidates':
+                items.append(self.dataset[name])
         
         input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates = items
 
-        return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history
+        return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates
 
 def collate_dialog(batch):
     '''
