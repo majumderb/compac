@@ -166,7 +166,7 @@ class PersonaChatDataset(Dataset):
             elif name == 'n_candidates':
                 items.append(self.dataset[name])
         
-        input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels, n_candidates = item
+        input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels, n_candidates = items
 
         return input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels, n_candidates
 
