@@ -193,7 +193,7 @@ def collate_dialog(batch):
         [c + [-100]*(max_seq_len - len(c)) for c in seq[0]]
         for seq in lm_labels])
 
-    mc_token_ids = torch.LongTensor(mc_token_ids).sequeeze(1)
+    mc_token_ids = torch.LongTensor(mc_token_ids).squeeze(1)
     mc_labels = torch.LongTensor(mc_labels)
 
     # persona
@@ -251,7 +251,7 @@ if __name__ == "__main__":
 
 
 '''
-from models.discrete_choice_model.dataset import PersonaChatDataset, ATTR_TO_SPECIAL_TOKEN
+from models.discrete_choice_model.dataset import PersonaChatDataset, ATTR_TO_SPECIAL_TOKEN, collate_dialog
 from transformers import GPT2Tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 tokenizer.add_special_tokens(ATTR_TO_SPECIAL_TOKEN)
@@ -263,6 +263,11 @@ args.dataset_path='/data2/bodhi/data/personachat/weak_label_comet_personachat/pe
 args.no_comet_persona=True
 dataset = PersonaChatDataset(args, tokenizer, split='train')
 batch = dataset._sample(2)
+padded_input_ids, padded_token_type_ids, padded_lm_labels, mc_token_ids, mc_labels, padded_persona, padded_history = collate_dialog(batch)
+
+
+
+
 input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels, n_candidates = zip(*batch)
 
 max_seq_len = 0
