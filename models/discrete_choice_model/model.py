@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class LatentMarginalizedModel(nn.module):
+class LatentMarginalizedModel(nn.Module):
     def __init__(self,
                  args,
                  generator_class):
