@@ -18,7 +18,7 @@ ATTR_TO_SPECIAL_TOKEN = {'bos_token': '<bos>', 'eos_token': '<eos>', 'pad_token'
 MODEL_INPUTS = ["input_ids", "mc_token_ids", "lm_labels", "mc_labels", "token_type_ids"]
 PADDED_INPUTS = ["input_ids", "lm_labels", "token_type_ids"]
 EFFECTS = ['xAttr', 'xEffect', 'xIntent', 'xNeed', 'xReact', 'xWant']
-PERSONA_MAX_LENGTH = 
+PERSONA_MAX_LENGTH = 50
 NUM_PERSONA = 5
 
 def pad_dataset(dataset, padding=0):
