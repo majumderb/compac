@@ -265,7 +265,7 @@ def train():
         trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {'mymodel': getattr(model, 'module', model)})  # "getattr" takes care of distributed encapsulation
 
         torch.save(args, log_dir + '/model_training_args.bin')
-        getattr(model, 'module', model).config.to_json_file(os.path.join(log_dir, CONFIG_NAME))
+        # getattr(model, 'module', model).config.to_json_file(os.path.join(log_dir, CONFIG_NAME))
         tokenizer.save_pretrained(log_dir)
 
         # Attach evaluation to trainer: we evaluate when we start the training and at the end of each epoch
