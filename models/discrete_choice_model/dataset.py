@@ -120,7 +120,7 @@ class PersonaChatDataset(Dataset):
                 if args.no_persona:
                     persona = [[]]
                 else:
-                    persona = [b + [[0]]*(MAX_NUM_PERSONA - len(b)) for b in persona]
+                    persona = persona + [[0]]*(MAX_NUM_PERSONA - len(persona))
                     print(len(persona))
                 for i, utterance in enumerate(dialog["utterances"]):
                     history = utterance["history"][-(2*args.max_history+1):]
