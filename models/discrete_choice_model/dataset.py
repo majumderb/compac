@@ -119,20 +119,24 @@ class PersonaChatDataset(Dataset):
             for perm in range(args.personality_permutations):
                 if args.no_persona:
                     persona = [[]]
+                else:
+                    persona = [b + [[0]]*(MAX_NUM_PERSONA - len(b)) for b in persona]
                 for i, utterance in enumerate(dialog["utterances"]):
                     print(i)
                     history = utterance["history"][-(2*args.max_history+1):]
-                    for j, candidate in enumerate(utterance["candidates"][-num_candidates:]):
-                        lm_labels = bool(j == num_candidates-1)
-                        instance = build_input_from_segments(persona, history, candidate, tokenizer, lm_labels)
-                        # print('instance: {}'.format(instance))
-                        print('candidate count: {}'.format(j))
-                        for input_name, input_array in instance.items():
-                            self.dataset[input_name].append(input_array)
+                    for persona_sample in persona:
+                        for j, candidate in enumerate(utterance["candidates"][-num_candidates:]):
+                            lm_labels = bool(j == num_candidates-1)
+                            instance = build_input_from_segments(persona_sample, history, candidate, tokenizer, lm_labels)
+                            # print('instance: {}'.format(instance))
+                            print('candidate count: {}'.format(j))
+                            for input_name, input_array in instance.items():
+                                self.dataset[input_name].append(input_array)
+                        
+                        self.dataset["mc_labels"].append(num_candidates - 1)
 
                     self.dataset["persona"].append([[ROBERTA_START] + p  for p in persona])
                     self.dataset["history"].append([ROBERTA_START] + list(chain(*history)))
-                    self.dataset["mc_labels"].append(num_candidates - 1)
                     self.dataset["n_candidates"] = num_candidates
                     self.length += 1 
                 # persona = [persona[-1]] + persona[:-1]  # permuted personalities
@@ -158,17 +162,20 @@ class PersonaChatDataset(Dataset):
         n_candidates
         '''
 
+        multiplier = self.dataset['n_candidates'] * MAX_NUM_PERSONA
         items = []
         for name in self.dataset.keys():
             if name not in ['n_candidates', 'mc_labels', 'persona', 'history']:
-                item = [self.dataset[name][index*self.dataset['n_candidates']:(index+1)*self.dataset['n_candidates']]]
+                item = [self.dataset[name][index*multiplier:(index+1)*multiplier]]
                 items.append(item)
-            elif name in ['mc_labels', 'persona', 'history']:
+            elif name  == 'mc_labels':
+                items.append(self.dataset[name][index*MAX_NUM_PERSONA:(index+1)*MAX_NUM_PERSONA])
+            elif name in ['persona', 'history']:
                 items.append(self.dataset[name][index])
         
-        input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels = items
+        input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history = items
 
-        return input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels
+        return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history
 
 def collate_dialog(batch):
     '''
@@ -184,16 +191,20 @@ def collate_dialog(batch):
     padded_input_ids = torch.LongTensor([
         [c + [0]*(max_seq_len - len(c)) for c in seq[0]]
         for seq in input_ids])
+    padded_input_ids = padded_input_ids.view((-1, MAX_NUM_PERSONA) + padded_input_ids.shape[1:])
 
     padded_token_type_ids = torch.LongTensor([
         [c + [0]*(max_seq_len - len(c)) for c in seq[0]]
         for seq in token_type_ids])
+    padded_token_type_ids = padded_token_type_ids.view((-1, MAX_NUM_PERSONA) + padded_token_type_ids.shape[1:])
     
     padded_lm_labels = torch.LongTensor([
         [c + [-100]*(max_seq_len - len(c)) for c in seq[0]]
         for seq in lm_labels])
+    padded_lm_labels = padded_lm_labels.view((-1, MAX_NUM_PERSONA) + padded_lm_labels.shape[1:])
 
     mc_token_ids = torch.LongTensor(mc_token_ids).squeeze(1)
+    mc_token_ids = mc_token_ids.view((-1, MAX_NUM_PERSONA) + mc_token_ids.shape[1:])
     mc_labels = torch.LongTensor(mc_labels)
 
     # persona
@@ -202,7 +213,6 @@ def collate_dialog(batch):
         for p in b:
             max_persona_len = max(max_persona_len, len(p))
 
-    persona = [b + [[0]*max_persona_len]*(MAX_NUM_PERSONA - len(b)) for b in persona]
     padded_persona = torch.LongTensor([[p + [0]*(max_persona_len - len(p)) for p in b] for b in persona])
 
     # history
