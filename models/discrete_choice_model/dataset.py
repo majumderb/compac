@@ -170,10 +170,10 @@ class PersonaChatDataset(Dataset):
                 items.append(item)
             elif name  == 'mc_labels':
                 items.append(self.dataset[name][index*MAX_NUM_PERSONA:(index+1)*MAX_NUM_PERSONA])
-            elif name in ['persona', 'history']:
+            elif name in ['persona', 'history', 'n_candidates']:
                 items.append(self.dataset[name][index])
         
-        input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history = items
+        input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates = items
 
         return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history
 
@@ -181,7 +181,7 @@ def collate_dialog(batch):
     '''
     Padding and Collating
     '''
-    input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels = zip(*batch)
+    input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates = zip(*batch)
 
     max_seq_len = 0
     for input in input_ids:
@@ -191,20 +191,20 @@ def collate_dialog(batch):
     padded_input_ids = torch.LongTensor([
         [c + [0]*(max_seq_len - len(c)) for c in seq[0]]
         for seq in input_ids])
-    padded_input_ids = padded_input_ids.view((-1, MAX_NUM_PERSONA) + padded_input_ids.shape[1:])
+    padded_input_ids = padded_input_ids.view((-1, MAX_NUM_PERSONA, n_candidates) + padded_input_ids.shape[2:])
 
     padded_token_type_ids = torch.LongTensor([
         [c + [0]*(max_seq_len - len(c)) for c in seq[0]]
         for seq in token_type_ids])
-    padded_token_type_ids = padded_token_type_ids.view((-1, MAX_NUM_PERSONA) + padded_token_type_ids.shape[1:])
+    padded_token_type_ids = padded_token_type_ids.view((-1, MAX_NUM_PERSONA, n_candidates) + padded_token_type_ids.shape[2:])
     
     padded_lm_labels = torch.LongTensor([
         [c + [-100]*(max_seq_len - len(c)) for c in seq[0]]
         for seq in lm_labels])
-    padded_lm_labels = padded_lm_labels.view((-1, MAX_NUM_PERSONA) + padded_lm_labels.shape[1:])
+    padded_lm_labels = padded_lm_labels.view((-1, MAX_NUM_PERSONA, n_candidates) + padded_lm_labels.shape[2:])
 
     mc_token_ids = torch.LongTensor(mc_token_ids).squeeze(1)
-    mc_token_ids = mc_token_ids.view((-1, MAX_NUM_PERSONA) + mc_token_ids.shape[1:])
+    mc_token_ids = mc_token_ids.view((-1, MAX_NUM_PERSONA, n_candidates))
     mc_labels = torch.LongTensor(mc_labels)
 
     # persona
