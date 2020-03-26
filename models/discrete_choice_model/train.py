@@ -91,6 +91,7 @@ def train():
     parser.add_argument("--do_eval", action='store_true', help="Do Evaluation")
     parser.add_argument("--no_persona", action='store_true', help="No Persona Evaluation")
     parser.add_argument("--no_comet_persona", action='store_true', help="No Persona Evaluation")
+    parser.add_argument("--log_dir", type=str, default="", required=True, help="Provide a log dir")
     args = parser.parse_args()
 
     # logging is set to INFO (resp. WARN) for main (resp. auxiliary) process. logger.info => log main process only, logger.warning => log all processes
@@ -251,6 +252,8 @@ def train():
         evaluator.add_event_handler(Events.COMPLETED, lambda _: pbar.log_message("Validation: %s" % pformat(evaluator.state.metrics)))
 
         log_dir = make_logdir(args.model_checkpoint, args.exp_name)
+        log_dir = os.path.join(args.log_dir, log_dir)
+
         print("Logging at log dir: {}".format(log_dir))
 
         # tb stuff
