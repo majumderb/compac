@@ -18,7 +18,8 @@ ATTR_TO_SPECIAL_TOKEN = {'bos_token': '<bos>', 'eos_token': '<eos>', 'pad_token'
 MODEL_INPUTS = ["input_ids", "mc_token_ids", "lm_labels", "mc_labels", "token_type_ids"]
 PADDED_INPUTS = ["input_ids", "lm_labels", "token_type_ids"]
 EFFECTS = ['xAttr', 'xEffect', 'xIntent', 'xNeed', 'xReact', 'xWant']
-PERSONA_MAX_LENGTH = 350
+PERSONA_MAX_LENGTH = 
+NUM_PERSONA = 5
 
 def pad_dataset(dataset, padding=0):
     """ Pad the dataset. This could be optimized by defining a Dataset class and padding at the batch level, but this is simpler. """
@@ -128,6 +129,7 @@ class PersonaChatDataset(Dataset):
                         print('candidate count: {}'.format(j))
                         for input_name, input_array in instance.items():
                             self.dataset[input_name].append(input_array)
+
                     self.dataset["persona"].append([[ROBERTA_START] + p  for p in persona])
                     self.dataset["history"].append([ROBERTA_START] + list(chain(*history)))
                     self.dataset["mc_labels"].append(num_candidates - 1)
@@ -158,10 +160,10 @@ class PersonaChatDataset(Dataset):
 
         items = []
         for name in self.dataset.keys():
-            if name not in ['n_candidates', 'mc_labels']:
+            if name not in ['n_candidates', 'mc_labels', 'persona', 'history']:
                 item = [self.dataset[name][index*self.dataset['n_candidates']:(index+1)*self.dataset['n_candidates']]]
                 items.append(item)
-            elif name == 'mc_labels':
+            elif name in ['mc_labels', 'persona', 'history']:
                 items.append(self.dataset[name][index])
         
         input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels = items
@@ -195,7 +197,7 @@ def collate_dialog(batch):
     mc_labels = torch.LongTensor(mc_labels)
 
     max_persona_len = 0
-    padded_persona = 0
+    for b in 
 
 
 
@@ -259,5 +261,9 @@ for input in input_ids:
 
 padded_input_ids = [[c + [0]*(max_seq_len - len(c)) for c in input[0]] for input in input_ids]
 
+max_persona_len = 0
+for b in persona:
+    for p in b[0]:
+        max_persona_len = max(max_persona_len, len(p))
 
 '''
