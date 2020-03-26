@@ -145,7 +145,7 @@ class PersonaChatDataset(Dataset):
         """
         For debugging purposes. Samples random turns
         """
-        return [self[i] for i in np.random.choice(len(self.dataset), n, replace=False)]
+        return [self[i] for i in np.random.choice(self.length, n, replace=False)]
 
     def __len__(self):
         return self.length
