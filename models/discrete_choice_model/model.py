@@ -14,7 +14,7 @@ class LatentMarginalizedModel(nn.Module):
         self.roberta_model = RobertaForSequenceClassification.from_pretrained('roberta-base', output_hidden_states=True)
 
         self.gpt2_model = generator_class.from_pretrained(args.model_checkpoint)
-        self.criterion_lm = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
+        self.criterion_lm = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction='mean')
         self.criterion_mc = torch.nn.CrossEntropyLoss(reduction='none')
 
     def get_prob_z_given_H(self, persona, history):
@@ -73,8 +73,8 @@ class LatentMarginalizedModel(nn.Module):
             # LM
             lm_labels_persona = lm_labels[:, i, ...]
             mc_labels_persona = mc_labels[:, i, ...]
-            lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
-            lm_labels_flat_shifted = lm_labels_persona[..., 1:].contiguous().view(-1)
+            lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(lm_logits.size(0), -1, lm_logits.size(-1))
+            lm_labels_flat_shifted = lm_labels_persona[..., 1:].contiguous().view(lm_labels.size(0), -1)
 
             print('flat')
             print(lm_logits_flat_shifted.shape)
