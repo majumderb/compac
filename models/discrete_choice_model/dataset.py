@@ -19,7 +19,7 @@ MODEL_INPUTS = ["input_ids", "mc_token_ids", "lm_labels", "mc_labels", "token_ty
 PADDED_INPUTS = ["input_ids", "lm_labels", "token_type_ids"]
 EFFECTS = ['xAttr', 'xEffect', 'xIntent', 'xNeed', 'xReact', 'xWant']
 PERSONA_MAX_LENGTH = 50
-NUM_PERSONA = 5
+MAX_NUM_PERSONA = 5
 
 def pad_dataset(dataset, padding=0):
     """ Pad the dataset. This could be optimized by defining a Dataset class and padding at the batch level, but this is simpler. """
@@ -196,9 +196,23 @@ def collate_dialog(batch):
     mc_token_ids = torch.LongTensor(mc_token_ids).sequeeze(1)
     mc_labels = torch.LongTensor(mc_labels)
 
+    # persona
     max_persona_len = 0
+    for b in persona:
+        for p in b:
+            max_persona_len = max(max_persona_len, len(p))
 
-    return batch
+    persona = [b + [[0]*max_persona_len]*(MAX_NUM_PERSONA - len(b)) for b in persona]
+    padded_persona = torch.LongTensor([[p + [0]*(max_persona_len - len(p)) for p in b] for b in persona])
+
+    # history
+    max_history_len = 0
+    for b in history:
+        max_history_len = max(max_history_len, len(b))
+    padded_history = torch.LongTensor([b + [0]*(max_history_len - len(b)) for b in history])
+
+    return padded_input_ids, padded_token_type_ids, padded_lm_labels, \
+        mc_token_ids, mc_labels, padded_persona, padded_history
 
 
 def preprocess_comet_dataset(dataset_path):
@@ -260,7 +274,15 @@ padded_input_ids = [[c + [0]*(max_seq_len - len(c)) for c in input[0]] for input
 
 max_persona_len = 0
 for b in persona:
-    for p in b[0]:
+    for p in b:
         max_persona_len = max(max_persona_len, len(p))
+
+persona = [b + [[0]*max_persona_len]*(MAX_NUM_PERSONA - len(b)) for b in persona]
+padded_persona = torch.LongTensor([[p + [0]*(max_persona_len - len(p)) for p in b] for b in persona])
+
+max_history_len = 0
+for b in history:
+    max_history_len = max(max_history_len, len(b))
+padded_history = torch.LongTensor([b + [0]*(max_history_len - len(b)) for b in history])
 
 '''
