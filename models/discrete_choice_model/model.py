@@ -14,7 +14,7 @@ class LatentMarginalizedModel(nn.Module):
         self.roberta_model = RobertaForSequenceClassification.from_pretrained('roberta-base', output_hidden_states=True)
 
         self.gpt2_model = generator_class.from_pretrained(args.model_checkpoint)
-        self.criterion_lm = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction='mean')
+        self.criterion_lm = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
         self.criterion_mc = torch.nn.CrossEntropyLoss(reduction='none')
 
     def get_prob_z_given_H(self, persona, history):
@@ -73,21 +73,19 @@ class LatentMarginalizedModel(nn.Module):
             # LM
             lm_labels_persona = lm_labels[:, i, ...]
             mc_labels_persona = mc_labels[:, i, ...]
-            lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(lm_logits.size(0), -1, lm_logits.size(-1))
-            lm_labels_flat_shifted = lm_labels_persona[..., 1:].contiguous().view(lm_labels.size(0), -1)
-
-            print('flat')
-            print(lm_logits_flat_shifted.shape)
-            print(lm_labels_flat_shifted.shape)
+            lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
+            lm_labels_flat_shifted = lm_labels_persona[..., 1:].contiguous().view(-1)
 
             ll_lm = -1.0 * self.criterion_lm(lm_logits_flat_shifted, lm_labels_flat_shifted)
-            print(ll_lm.shape)
-            print(torch.log(z_given_h[:, i]))
+            ll_lm = ll_lm.view(lm_labels.size(0), -1).mean(-1)
+
             log_prob_x_given_z_h_lm = ll_lm + torch.log(z_given_h[:, i]) # B
             log_probs_lm.append(log_prob_x_given_z_h_lm)
 
             # MC
             ll_mc = -1.0 * self.criterion_mc(mc_logits.view(-1, mc_logits.size(-1)), mc_labels_persona.view(-1))
+            ll_mc = ll_mc.view(mc_labels.size(0), -1).mean(-1)
+
             log_prob_x_given_z_h_mc = ll_mc + torch.log(z_given_h[:, i]) # B
             log_probs_mc.append(log_prob_x_given_z_h_mc)
         
