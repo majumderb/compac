@@ -36,9 +36,6 @@ def build_input_from_segments(persona, history, reply, tokenizer, lm_labels=Fals
     # print('\nseq', sequence)
     # print('\npersona', persona)
     # print('\nhistory', history)
-    instance["persona"] = [[ROBERTA_START] + p  for p in persona]
-    # instance["persona_length"] = [len(p) for p in instance["persona"]]
-    instance["history"] = [ROBERTA_START] + list(chain(*history))
     instance["input_ids"] = list(chain(*sequence))
     instance["token_type_ids"] = [speaker2 if i % 2 else speaker1 for i, s in enumerate(sequence) for _ in s]
     instance["mc_token_ids"] = len(instance["input_ids"]) - 1
@@ -131,6 +128,8 @@ class PersonaChatDataset(Dataset):
                         print('candidate count: {}'.format(j))
                         for input_name, input_array in instance.items():
                             self.dataset[input_name].append(input_array)
+                    self.dataset["persona"] = [[ROBERTA_START] + p  for p in persona]
+                    self.dataset["history"] = [ROBERTA_START] + list(chain(*history))
                     self.dataset["mc_labels"].append(num_candidates - 1)
                     self.dataset["n_candidates"] = num_candidates
                     self.length += 1 
@@ -147,12 +146,12 @@ class PersonaChatDataset(Dataset):
 
     def __getitem__(self, index):
         '''
-        persona
-        history
         input_ids
         token_type_ids
         mc_token_ids
         lm_labels
+        persona
+        history
         mc_labels
         n_candidates
         '''
@@ -162,15 +161,20 @@ class PersonaChatDataset(Dataset):
             if name not in ['n_candidates', 'mc_labels']:
                 item = [self.dataset[name][index*self.dataset['n_candidates']:(index+1)*self.dataset['n_candidates']]]
                 items.append(item)
-            elif name == 'mc_labesl':
+            elif name == 'mc_labels':
                 items.append(self.dataset[name][index])
             elif name == 'n_candidates':
                 items.append(self.dataset[name])
         
         return items
 
-# def collate_dialog(batch):
-#     return batch
+def collate_dialog(batch):
+    '''
+    Padding and Collating
+    '''
+    input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels, n_candidates = zip(*batch)
+
+    return batch
 
 
 def preprocess_comet_dataset(dataset_path):
