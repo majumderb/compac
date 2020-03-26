@@ -8,12 +8,7 @@ import torch.nn.functional as F
 class LatentMarginalizedModel(nn.module):
     def __init__(self,
                  args,
-                 encoder_class,
-                 generator_class,
-                 output_size,
-                 hidden_dim,
-                 max_len,
-                 use_segments=False):
+                 generator_class):
         super().__init__()
 
         self.roberta_model = RobertaForSequenceClassification.from_pretrained('roberta-base', output_hidden_states=True)
@@ -46,7 +41,15 @@ class LatentMarginalizedModel(nn.module):
 
         return prob_z_given_H
     
-    def forward(self, batch):
+    def forward(
+        self,
+        input_ids,
+        token_type_ids,
+        mc_token_ids,
+        lm_labels,
+        mc_labels,
+        persona,
+        history):
         '''
         persona: B x P x T
         input_ids: B x P x C x T
@@ -55,10 +58,6 @@ class LatentMarginalizedModel(nn.module):
         mc_labels: B
         token_type_ids: B x P x C x T 
         '''
-
-        input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids, persona = batch
-
-        history = []
 
         z_given_h = self.get_prob_z_given_H(persona, history) # B x P
 
@@ -95,5 +94,4 @@ class LatentMarginalizedModel(nn.module):
         log_sum_exp_mc = torch.logsumexp(log_probs_mc) # logsumexp
         loss_mc = log_sum_exp_mc.sum()
 
-        total_loss = loss_lm + loss_mc
-        return total_loss
+        return loss_lm, loss_mc

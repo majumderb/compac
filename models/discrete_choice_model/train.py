@@ -17,9 +17,11 @@ from ignite.contrib.handlers.tensorboard_logger import TensorboardLogger, Output
 from transformers import (AdamW, OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer,
                                   GPT2DoubleHeadsModel, GPT2Tokenizer, WEIGHTS_NAME, CONFIG_NAME)
 
-from utils import get_dataset, make_logdir
-from data import get_data_loaders
-from data import PADDED_INPUTS, ATTR_TO_SPECIAL_TOKEN
+from models.discrete_choice_model.model import LatentMarginalizedModel
+from models.discrete_choice_model.utils import get_dataset, make_logdir
+# from models.discrete_choice_model.data import get_data_loaders
+from models.discrete_choice_model.dataset import PersonaChatDataset, collate_dialog
+from models.discrete_choice_model.data import PADDED_INPUTS, ATTR_TO_SPECIAL_TOKEN
 
 def average_distributed_scalar(scalar, args):
     """ Average a scalar over the nodes if we are in distributed training. We use this for distributed evaluation. """
@@ -29,22 +31,12 @@ def average_distributed_scalar(scalar, args):
     torch.distributed.all_reduce(scalar_t, op=torch.distributed.ReduceOp.SUM)
     return scalar_t.item()
 
-
-def pad_dataset(dataset, padding=0):
-    """ Pad the dataset. This could be optimized by defining a Dataset class and padding at the batch level, but this is simpler. """
-    max_l = max(len(x) for x in dataset["input_ids"])
-    for name in PADDED_INPUTS:
-        dataset[name] = [x + [padding if name != "lm_labels" else -100] * (max_l - len(x)) for x in dataset[name]]
-    return dataset
-
-
 def add_special_tokens_(model, tokenizer):
     """ Add special tokens to the tokenizer and the model if they have not already been added. """
     orig_num_tokens = len(tokenizer.encoder)
     num_added_tokens = tokenizer.add_special_tokens(ATTR_TO_SPECIAL_TOKEN) # doesn't add if they are already there
     if num_added_tokens > 0:
-        model.resize_token_embeddings(new_num_tokens=orig_num_tokens + num_added_tokens)
-
+        model.gpt2_model.resize_token_embeddings(new_num_tokens=orig_num_tokens + num_added_tokens)
 
 '''
 deepy
@@ -65,7 +57,7 @@ data loading test w comet:
 > python3 train.py --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --max_history=2 --n_epochs=1 --num_candidates=4 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1 --test_run_num 1  --num_beams 5 --exp_name test
 
 train:
-> python3 train.py --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --max_history=2 --n_epochs=1 --num_candidates=4 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5 --exp_name test --no_comet_persona --do_train --do_eval
+> python3 -m models.discrete_choice_model.train.py --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --max_history=2 --n_epochs=1 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5 --exp_name test --no_comet_persona --do_train
 
 train w comet:
 > python3 train.py --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --max_history=2 --n_epochs=1 --num_candidates=4 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5 --exp_name test --do_train --do_eval
@@ -124,6 +116,9 @@ def train():
     model = model_class.from_pretrained(args.model_checkpoint)
     model.to(args.device)
 
+    model = LatentMarginalizedModel(args, generator_class=model_class)
+    model.to(args.device)
+
     # Add special tokens if they are not already added
     add_special_tokens_(model, tokenizer)
     optimizer = AdamW(model.parameters(), lr=args.lr, correct_bias=True)
@@ -136,18 +131,48 @@ def train():
         model = DistributedDataParallel(model, device_ids=[args.local_rank], output_device=args.local_rank)
 
     print("Prepare datasets")
-    train_loader, val_loader, train_sampler, valid_sampler = get_data_loaders(args, tokenizer)
+
+    train_dataset = PersonaChatDataset(args, tokenizer, split='train')
+    val_dataset = PersonaChatDataset(args, tokenizer, split='valid')
+
+    train_sampler = torch.utils.data.sampler.RandomSampler(train_dataset)
+
+    train_loader = DataLoader(
+        train_dataset,
+        sampler=train_sampler,
+        batch_size=args.train_batch_size,
+        collate_fn=collate_dialog,
+        pin_memory=True)
+    
+    val_loader = DataLoader(
+        val_dataset,
+        shuffle=False,
+        batch_size=args.valid_batch_size,
+        collate_fn=collate_dialog,
+        pin_memory=True)
+
+    # train_loader, val_loader, train_sampler, valid_sampler = get_data_loaders(args, tokenizer)
 
     # Training function and trainer
     def update(engine, batch):
+        
         model.train()
+
         batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
-        input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids = batch
-        (lm_loss), (mc_loss), *_ = model(
-            input_ids, token_type_ids=token_type_ids, mc_token_ids=mc_token_ids,
-            mc_labels=mc_labels, lm_labels=lm_labels
+        input_ids, token_type_ids, lm_labels, mc_token_ids, mc_labels, persona, history = batch
+        
+        (lm_loss), (mc_loss) = model(
+            input_ids=input_ids,
+            token_type_ids=token_type_ids,
+            mc_token_ids=mc_token_ids,
+            lm_labels=lm_labels,
+            mc_labels=mc_labels,
+            persona=persona,
+            history=history
         )
+
         loss = (lm_loss * args.lm_coef + mc_loss * args.mc_coef) / args.gradient_accumulation_steps
+        
         if args.fp16:
             with amp.scale_loss(loss, optimizer) as scaled_loss:
                 scaled_loss.backward()
@@ -155,32 +180,43 @@ def train():
         else:
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_norm)
+        
         if engine.state.iteration % args.gradient_accumulation_steps == 0:
             optimizer.step()
             optimizer.zero_grad()
+        
         return loss.item()
+    
     trainer = Engine(update)
 
     # Evaluation function and evaluator (evaluator output is the input of the metrics)
     def inference(engine, batch):
+    
         model.eval()
+    
         with torch.no_grad():
+    
             batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
             input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids = batch
+    
             # print(tokenizer.decode(input_ids[0, -1, :].tolist()))
             # if we dont send labels to model, it doesnt return losses
+    
             lm_logits, mc_logits, *_ = model(
                 input_ids, token_type_ids=token_type_ids, mc_token_ids=mc_token_ids,
             )
+    
             lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
             lm_labels_flat_shifted = lm_labels[..., 1:].contiguous().view(-1)
+    
             return (lm_logits_flat_shifted, mc_logits), (lm_labels_flat_shifted, mc_labels)
+    
     evaluator = Engine(inference)
 
     # Make sure distributed data samplers split the dataset nicely between the distributed processes
-    if args.distributed:
-        trainer.add_event_handler(Events.EPOCH_STARTED, lambda engine: train_sampler.set_epoch(engine.state.epoch))
-        evaluator.add_event_handler(Events.EPOCH_STARTED, lambda engine: valid_sampler.set_epoch(engine.state.epoch))
+    # if args.distributed:
+    #     trainer.add_event_handler(Events.EPOCH_STARTED, lambda engine: train_sampler.set_epoch(engine.state.epoch))
+    #     evaluator.add_event_handler(Events.EPOCH_STARTED, lambda engine: valid_sampler.set_epoch(engine.state.epoch))
 
     # Linearly decrease the learning rate from lr to zero
     scheduler = PiecewiseLinear(optimizer, "lr", [(0, args.lr), (args.n_epochs * len(train_loader), 0.0)])
@@ -188,11 +224,17 @@ def train():
 
     # Prepare metrics - note how we compute distributed metrics
     RunningAverage(output_transform=lambda x: x).attach(trainer, "loss")
-    metrics = {"nll": Loss(torch.nn.CrossEntropyLoss(ignore_index=-100), output_transform=lambda x: (x[0][0], x[1][0])),
-               "accuracy": Accuracy(output_transform=lambda x: (x[0][1], x[1][1]))}
-    metrics.update({"average_nll": MetricsLambda(average_distributed_scalar, metrics["nll"], args),
-                    "average_accuracy": MetricsLambda(average_distributed_scalar, metrics["accuracy"], args)})
+
+    metrics = {
+        "nll": Loss(torch.nn.CrossEntropyLoss(ignore_index=-100), output_transform=lambda x: (x[0][0], x[1][0])),
+        "accuracy": Accuracy(output_transform=lambda x: (x[0][1], x[1][1]))}
+
+    metrics.update(
+        {"average_nll": MetricsLambda(average_distributed_scalar, metrics["nll"], args),
+        "average_accuracy": MetricsLambda(average_distributed_scalar, metrics["accuracy"], args)})
+
     metrics["average_ppl"] = MetricsLambda(math.exp, metrics["average_nll"])
+
     for name, metric in metrics.items():
         metric.attach(evaluator, name)
 

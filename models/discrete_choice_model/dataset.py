@@ -276,30 +276,4 @@ args.no_comet_persona=True
 dataset = PersonaChatDataset(args, tokenizer, split='train')
 batch = dataset._sample(2)
 padded_input_ids, padded_token_type_ids, padded_lm_labels, mc_token_ids, mc_labels, padded_persona, padded_history = collate_dialog(batch)
-
-
-
-
-input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels, n_candidates = zip(*batch)
-
-max_seq_len = 0
-for input in input_ids:
-    for c in input[0]:
-        max_seq_len = max(max_seq_len, len(c))
-
-padded_input_ids = [[c + [0]*(max_seq_len - len(c)) for c in input[0]] for input in input_ids]
-
-max_persona_len = 0
-for b in persona:
-    for p in b:
-        max_persona_len = max(max_persona_len, len(p))
-
-persona = [b + [[0]*max_persona_len]*(MAX_NUM_PERSONA - len(b)) for b in persona]
-padded_persona = torch.LongTensor([[p + [0]*(max_persona_len - len(p)) for p in b] for b in persona])
-
-max_history_len = 0
-for b in history:
-    max_history_len = max(max_history_len, len(b))
-padded_history = torch.LongTensor([b + [0]*(max_history_len - len(b)) for b in history])
-
 '''
