@@ -39,7 +39,7 @@ class LatentMarginalizedModel(nn.Module):
         norms = -1 * torch.norm(history_encodings-persona_encodings, 2, dim=-1)
         prob_z_given_H = F.softmax(norms, dim=-1)       
 
-        return prob_z_given_H
+        return prob_z_given_H #  B x P
     
     def forward(
         self,
@@ -65,9 +65,9 @@ class LatentMarginalizedModel(nn.Module):
         log_probs_mc = []
         for i in range(input_ids.shape[1]):
             lm_logits, mc_logits, *_ = self.gpt2_model(
-                input_ids[:, i, ...],
-                token_type_ids=token_type_ids[:, i, ...],
-                mc_token_ids=mc_token_ids[:, i, ...],
+                input_ids[:, i, ...].contiguous(),
+                token_type_ids=token_type_ids[:, i, ...].contiguous(),
+                mc_token_ids=mc_token_ids[:, i, ...].contiguous(),
             )
 
             # LM
