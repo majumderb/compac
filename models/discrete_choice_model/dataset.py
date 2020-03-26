@@ -184,6 +184,7 @@ def collate_dialog(batch):
     Padding and Collating
     '''
     input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates = zip(*batch)
+    n_candidates = n_candidates[0]
 
     max_seq_len = 0
     for input in input_ids:
