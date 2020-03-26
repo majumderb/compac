@@ -123,14 +123,12 @@ class PersonaChatDataset(Dataset):
                     persona = [b + [[0]]*(MAX_NUM_PERSONA - len(b)) for b in persona]
                     print(len(persona))
                 for i, utterance in enumerate(dialog["utterances"]):
-                    print(i)
                     history = utterance["history"][-(2*args.max_history+1):]
                     for persona_sample in persona:
                         for j, candidate in enumerate(utterance["candidates"][-num_candidates:]):
                             lm_labels = bool(j == num_candidates-1)
                             instance = build_input_from_segments([persona_sample], history, candidate, tokenizer, lm_labels)
                             # print('instance: {}'.format(instance))
-                            print('candidate count: {}'.format(j))
                             for input_name, input_array in instance.items():
                                 self.dataset[input_name].append(input_array)
                         
@@ -188,8 +186,8 @@ def collate_dialog(batch):
     n_candidates = n_candidates[0]
 
     max_seq_len = 0
-    for input in input_ids:
-        for c in input[0]:
+    for b in input_ids:
+        for c in b[0]:
             max_seq_len = max(max_seq_len, len(c))
 
     padded_input_ids = torch.LongTensor([
