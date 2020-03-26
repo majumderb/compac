@@ -166,7 +166,9 @@ class PersonaChatDataset(Dataset):
             elif name == 'n_candidates':
                 items.append(self.dataset[name])
         
-        return items
+        input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels, n_candidates = item
+
+        return input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels, n_candidates
 
 def collate_dialog(batch):
     '''
