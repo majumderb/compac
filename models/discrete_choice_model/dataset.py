@@ -194,8 +194,8 @@ def collate_dialog(batch):
     mc_token_ids = torch.LongTensor(mc_token_ids).sequeeze(1)
     mc_labels = torch.LongTensor(mc_labels)
 
-    max_persona_len = 
-    padded_persona = 
+    max_persona_len = 0
+    padded_persona = 0
 
 
 
@@ -250,7 +250,7 @@ args.dataset_path='/data2/bodhi/data/personachat/weak_label_comet_personachat/pe
 args.no_comet_persona=True
 dataset = PersonaChatDataset(args, tokenizer, split='train')
 batch = dataset._sample(2)
-
+input_ids, token_type_ids, mc_token_ids, lm_labels, persona, history, mc_labels, n_candidates = zip(*batch)
 
 max_seq_len = 0
 for input in input_ids:
