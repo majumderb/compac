@@ -36,7 +36,7 @@ class LatentMarginalizedModel(nn.Module):
         
         persona_encodings = torch.stack(persona_encodings, axis=1)
 
-        norms = torch.norm(history_encodings-persona_encodings, 2, dim=-1)
+        norms = -1 * torch.norm(history_encodings-persona_encodings, 2, dim=-1)
         prob_z_given_H = F.softmax(norms, dim=-1)       
 
         return prob_z_given_H
@@ -86,14 +86,12 @@ class LatentMarginalizedModel(nn.Module):
         
         # LM
         log_probs_lm = torch.stack(log_probs_lm).T
-        print(log_probs_lm.shape)
         log_sum_exp_lm = torch.logsumexp(log_probs_lm, dim=1) # logsumexp
-        loss_lm = log_sum_exp_lm.sum()
+        loss_lm = -log_sum_exp_lm.sum()
 
         # MC
         log_probs_mc = torch.stack(log_probs_mc).T
-        print(log_probs_mc.shape)
         log_sum_exp_mc = torch.logsumexp(log_probs_mc, dim=1) # logsumexp
-        loss_mc = log_sum_exp_mc.sum()
+        loss_mc = -log_sum_exp_mc.sum()
 
         return loss_lm, loss_mc
