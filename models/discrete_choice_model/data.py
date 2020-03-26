@@ -3,7 +3,7 @@ from itertools import chain
 from argparse import ArgumentParser
 
 from torch.utils.data import DataLoader, TensorDataset, Dataset
-from utils import get_dataset, make_logdir, preprocess
+from models.discrete_choice_model.utils import get_dataset, make_logdir, preprocess
 from datetime import datetime
 
 import torch
@@ -165,7 +165,7 @@ class PersonaChatDataset(Dataset):
     ):
         super().__init__()
 
-        
+
 
 
 
