@@ -86,12 +86,14 @@ class LatentMarginalizedModel(nn.Module):
         
         # LM
         log_probs_lm = torch.stack(log_probs_lm).T
-        log_sum_exp_lm = torch.logsumexp(log_probs_lm) # logsumexp
+        print(log_probs_lm.shape)
+        log_sum_exp_lm = torch.logsumexp(log_probs_lm, dim=1) # logsumexp
         loss_lm = log_sum_exp_lm.sum()
 
         # MC
         log_probs_mc = torch.stack(log_probs_mc).T
-        log_sum_exp_mc = torch.logsumexp(log_probs_mc) # logsumexp
+        print(log_probs_mc.shape)
+        log_sum_exp_mc = torch.logsumexp(log_probs_mc, dim=1) # logsumexp
         loss_mc = log_sum_exp_mc.sum()
 
         return loss_lm, loss_mc
