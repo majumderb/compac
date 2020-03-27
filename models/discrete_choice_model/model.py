@@ -86,8 +86,8 @@ class LatentMarginalizedModel(nn.Module):
             lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
             lm_labels_flat_shifted = lm_labels_persona[..., 1:].contiguous().view(-1)
 
-            ll_lm = -1.0 * self.criterion_lm(lm_logits_flat_shifted, lm_labels_flat_shifted)
-            ll_lm = ll_lm.view(lm_labels.size(0), -1).mean(-1)
+            ll_lm = -1.0 * self.criterion_lm(lm_logits_flat_shifted, lm_labels_flat_shifted) # B x C x T
+            ll_lm = ll_lm.view(lm_labels.size(0), -1).mean(-1) # B
 
             log_prob_x_given_z_h_lm = ll_lm + torch.log(z_given_h[:, i]) # B
             log_probs_lm.append(log_prob_x_given_z_h_lm)
@@ -100,13 +100,13 @@ class LatentMarginalizedModel(nn.Module):
             log_probs_mc.append(log_prob_x_given_z_h_mc)
         
         # LM
-        log_probs_lm = torch.stack(log_probs_lm).T
-        log_sum_exp_lm = torch.logsumexp(log_probs_lm, dim=1) # logsumexp
-        loss_lm = -1.0 * log_sum_exp_lm.sum()
+        log_probs_lm = torch.stack(log_probs_lm).T  # B x P
+        log_sum_exp_lm = torch.logsumexp(log_probs_lm, dim=1) # logsumexp,  B
+        loss_lm = -1.0 * log_sum_exp_lm.mean()
 
         # MC
         log_probs_mc = torch.stack(log_probs_mc).T
         log_sum_exp_mc = torch.logsumexp(log_probs_mc, dim=1) # logsumexp
-        loss_mc = -1.0 * log_sum_exp_mc.sum()
+        loss_mc = -1.0 * log_sum_exp_mc.mean()
 
         return loss_lm, loss_mc
