@@ -128,10 +128,7 @@ def run():
 
     logger.info("Get finetuned model and tokenizer")
     training_args = torch.load(os.path.join(args.model_checkpoint_dir, 'model_training_args.bin'))
-
-    model_class = GPT2LMHeadModel
-    model = LatentMarginalizedModel(training_args, generator_class=model_class)
-    model.to(args.device)
+    print('Loaded training args.')
 	
     if args.seed != 0:
     	random.seed(args.seed)
@@ -140,7 +137,7 @@ def run():
 
     tokenizer_class, model_class = (GPT2Tokenizer, GPT2LMHeadModel)
     tokenizer = tokenizer_class.from_pretrained(args.model_checkpoint_dir)
-    model = LatentMarginalizedModel(args, generator_class=model_class)
+    model = LatentMarginalizedModel(training_args, generator_class=model_class)
 
     # Load model weights
     model_checkpoint_path = os.path.join(args.model_checkpoint_dir, args.load_checkpoint_from)
