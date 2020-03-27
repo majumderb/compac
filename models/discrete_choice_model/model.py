@@ -8,10 +8,14 @@ import torch.nn.functional as F
 class LatentMarginalizedModel(nn.Module):
     def __init__(self,
                  args,
-                 generator_class):
+                 generator_class,
+                 uniform_prior=False):
         super().__init__()
 
-        self.roberta_model = RobertaForSequenceClassification.from_pretrained('roberta-base', output_hidden_states=True)
+        self.args = args
+        self.uniform_prior = uniform_prior
+        if not uniform_prior:
+            self.roberta_model = RobertaForSequenceClassification.from_pretrained('roberta-base', output_hidden_states=True)
 
         self.gpt2_model = generator_class.from_pretrained(args.model_checkpoint)
         self.criterion_lm = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
@@ -25,21 +29,28 @@ class LatentMarginalizedModel(nn.Module):
         We take the pooled output from Roberta; which uses same tokenization as GPT2
         TODO: Add <s> token at the beginning which will act as [CLS] token in BERT
         '''
-
-        history_encodings = self.roberta_model(history)[1][-1][:, 0, :] # B x 764
-        history_encodings = history_encodings.unsqueeze(1).repeat(1, persona.shape[1], 1) # B x P x 764
-
-        persona_encodings = []
-        for i in range(persona.shape[1]):
-            persona_enc = self.roberta_model(persona[:, i, ...])[1][-1][:, 0, :] # B x 764
-            persona_encodings.append(persona_enc)
         
-        persona_encodings = torch.stack(persona_encodings, axis=1)
+        if self.uniform_prior:
+            num_persona = persona.shape[1]
+            prob_z_given_H = torch.ones([persona.shape[:2]])/num_persona # B x P
 
-        norms = -1.0 * torch.norm(history_encodings-persona_encodings, 2, dim=-1)
-        prob_z_given_H = F.softmax(norms, dim=-1)       
+            return prob_z_given_H.to(self.args.device)
+        
+        else:
+            history_encodings = self.roberta_model(history)[1][-1][:, 0, :] # B x 764
+            history_encodings = history_encodings.unsqueeze(1).repeat(1, persona.shape[1], 1) # B x P x 764
 
-        return prob_z_given_H #  B x P
+            persona_encodings = []
+            for i in range(persona.shape[1]):
+                persona_enc = self.roberta_model(persona[:, i, ...])[1][-1][:, 0, :] # B x 764
+                persona_encodings.append(persona_enc)
+            
+            persona_encodings = torch.stack(persona_encodings, axis=1)
+
+            norms = -1.0 * torch.norm(history_encodings-persona_encodings, 2, dim=-1)
+            prob_z_given_H = F.softmax(norms, dim=-1)       
+
+            return prob_z_given_H #  B x P
     
     def forward(
         self,
