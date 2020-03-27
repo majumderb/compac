@@ -31,7 +31,7 @@ class LatentMarginalizedModel(nn.Module):
         
         if self.uniform_prior:
             num_persona = persona.shape[1]
-            prob_z_given_H = torch.ones([persona.shape[:2]])/num_persona # B x P
+            prob_z_given_H = torch.ones([persona.shape[0], persona.shape[1]])/num_persona # B x P
 
             return prob_z_given_H.to(self.args.device)
         
