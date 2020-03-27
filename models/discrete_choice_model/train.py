@@ -252,7 +252,7 @@ def train():
 
     if args.local_rank in [-1, 0]:
         pbar = ProgressBar(persist=True)
-        pbar.attach(trainer, metric_names=["loss"])
+        pbar.attach(trainer, metric_names=["loss", "perplexity"])
         evaluator.add_event_handler(Events.COMPLETED, lambda _: pbar.log_message("Validation: %s" % pformat(evaluator.state.metrics)))
 
         log_dir = make_logdir(args.model_checkpoint, args.exp_name)
