@@ -189,7 +189,7 @@ def train():
             optimizer.step()
             optimizer.zero_grad()
         
-        return loss.item()
+        return loss.item(), math.exp(lm_loss.item())
     
     trainer = Engine(update)
 
@@ -227,7 +227,8 @@ def train():
     trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
 
     # Prepare metrics - note how we compute distributed metrics
-    RunningAverage(output_transform=lambda x: x).attach(trainer, "loss")
+    RunningAverage(output_transform=lambda x: x[0]).attach(trainer, "loss")
+    RunningAverage(output_transform=lambda x: x[1]).attach(trainer, "perplexity")
 
     metrics = {
         "nll": Loss(torch.nn.CrossEntropyLoss(ignore_index=-100), output_transform=lambda x: (x[0][0], x[1][0])),

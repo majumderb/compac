@@ -270,6 +270,7 @@ import torch
 args = torch.load('/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/Mar03_00-35-44_deepyeti_gpt2test/model_training_args.bin')
 args.dataset_cache = 'persona_comet_weak_label_preprocessed'
 args.personality_permutations = 1
+args.test_run_num = -1
 args.dataset_path='/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json'
 args.no_comet_persona=True
 dataset = PersonaChatDataset(args, tokenizer, split='train')
