@@ -5,13 +5,16 @@ from itertools import chain
 from pprint import pformat
 import warnings
 
+import os
 import torch
 import torch.nn.functional as F
 
 from transformers import OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, GPT2LMHeadModel, GPT2Tokenizer
-from train import add_special_tokens_
-from data import SPECIAL_TOKENS, build_input_from_segments, ATTR_TO_SPECIAL_TOKEN
-from utils import get_dataset, download_pretrained_model
+from models.discrete_choice_model.train import add_special_tokens_
+from models.discrete_choice_model.data import SPECIAL_TOKENS, build_input_from_segments, ATTR_TO_SPECIAL_TOKEN
+from models.discrete_choice_model.dataset import ROBERTA_START
+from models.discrete_choice_model.utils import get_dataset, download_pretrained_model
+from models.discrete_choice_model.model import LatentMarginalizedModel
 
 def top_filtering(logits, top_k=0., top_p=0.9, threshold=-float('Inf'), filter_value=-float('Inf')):
     """ Filter a distribution of logits using top-k, top-p (nucleus) and/or threshold filtering
@@ -57,13 +60,23 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
     if current_output is None:
         current_output = []
 
+    # 1 x P x T
+    personality = torch.tensor([[ROBERTA_START] + p  for p in personality], device=args.device).unsqueeze(0) 
+    # 1 x T
+    history_flat = torch.tensor([ROBERTA_START] + list(chain(*history)), device=args.device).unsqueeze(0)
+
+    prior_z = model.get_prob_z_given_H(personality, history_flat) # B x P
+    z = torch.argmax(prior_z, dim=1).item()
+
+    selected_personality = personality[z]
+
     for i in range(args.max_length):
-        instance = build_input_from_segments(personality, history, current_output, tokenizer, with_eos=False)
+        instance = build_input_from_segments(selected_personality, history, current_output, tokenizer, with_eos=False)
 
         input_ids = torch.tensor(instance["input_ids"], device=args.device).unsqueeze(0)
         token_type_ids = torch.tensor(instance["token_type_ids"], device=args.device).unsqueeze(0)
 
-        logits = model(input_ids, token_type_ids=token_type_ids)
+        logits = model(input_ids, token_type_ids=token_type_ids, generate=True)
         if isinstance(logits, tuple):  # for gpt2 and maybe others
             logits = logits[0]
         logits = logits[0, -1, :] / args.temperature
@@ -93,7 +106,9 @@ def run():
     parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
     parser.add_argument("--dataset_cache", type=str, default='persona_comet', help="Path or url of the dataset cache")
     parser.add_argument("--model", type=str, default="openai-gpt", help="Model type (openai-gpt or gpt2)", choices=['openai-gpt', 'gpt2'])  # anything besides gpt2 will load openai-gpt
-    parser.add_argument("--model_checkpoint", type=str, default="", help="Path, url or short name of the model")
+    parser.add_argument("--model_checkpoint_dir", type=str, default="", help="Path, url or short name of the model")
+    parser.add_argument("--load_checkpoint_from", type=str, default="", help="Path, url or short name of the model")
+
     parser.add_argument("--max_history", type=int, default=2, help="Number of previous utterances to keep in history")
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", help="Device (cuda or cpu)")
 
@@ -111,61 +126,72 @@ def run():
     logger = logging.getLogger(__file__)
     logger.info(pformat(args))
 
-    if args.model_checkpoint == "":
-        if args.model == 'gpt2':
-            raise ValueError("Interacting with GPT2 requires passing a finetuned model_checkpoint")
-        else:
-            args.model_checkpoint = download_pretrained_model()
-	
+    logger.info("Get finetuned model and tokenizer")
+    training_args = torch.load(os.path.join(args.model_checkpoint_dir, 'model_training_args.bin'))
+
+    model_class = GPT2LMHeadModel
+    model = LatentMarginalizedModel(training_args, generator_class=model_class)
+    model.to(args.device)
 	
     if args.seed != 0:
     	random.seed(args.seed)
     	torch.random.manual_seed(args.seed)
     	torch.cuda.manual_seed(args.seed)
 
+    tokenizer_class, model_class = (GPT2Tokenizer, GPT2LMHeadModel)
+    tokenizer = tokenizer_class.from_pretrained(args.model_checkpoint_dir)
+    model = LatentMarginalizedModel(args, generator_class=model_class)
 
-    logger.info("Get pretrained model and tokenizer")
-    tokenizer_class, model_class = (GPT2Tokenizer, GPT2LMHeadModel) if args.model == 'gpt2' else (OpenAIGPTTokenizer, OpenAIGPTLMHeadModel)
-    tokenizer = tokenizer_class.from_pretrained(args.model_checkpoint)
-    model = model_class.from_pretrained(args.model_checkpoint)
+    # Load model weights
+    model_checkpoint_path = os.path.join(args.model_checkpoint_dir, args.load_checkpoint_from)
+    model_weights = torch.load(
+        model_checkpoint_path, map_location=lambda storage, loc: storage
+    )['state_dict']
+    corrected_model_weights = {}
+    for k, v in model_weights.items():
+        corrected_model_weights[k.replace('model.', '')] = v
+
+    model.load_state_dict(corrected_model_weights, strict=False)
+    print('Loaded model weights from {}'.format(model_checkpoint_path))
+
     model.to(args.device)
-    add_special_tokens_(model, tokenizer)
+    # add_special_tokens_(model, tokenizer)
 
-    logger.info("Sample a personality")
-    dataset = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
-    # personalities = [dialog["personality"] for dataset in dataset.values() for dialog in dataset]
-    dialogs = [dialog for dataset in dataset.values() for dialog in dataset]
-    dialog =  random.choice(dialogs)
-    # personality = random.choice(personalities)
-    personality = dialog['personality']
-    comet_annotations = dialog["coment_annotation"]
-    for sent in comet_annotations:
-        sent_beams = []
-        for effect in sent['comet'].items():
-            # not sure is ' .' should be added or '.'
-            # tokenizer realize different tokens for each of the above options
-            # beams = [x+' .' for x in effect[1]['beams']]
-            if args.comet_greedy:
-                sent_beams += [effect[1]['beams'][0]]
-            else:
-                sent_beams += effect[1]['beams']
-    personality += sent_beams
-    print(personality)
-    logger.info("Selected personality: %s", tokenizer.decode(chain(*personality)))
+    # logger.info("Sample a personality")
+    # dataset = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
+    # # personalities = [dialog["personality"] for dataset in dataset.values() for dialog in dataset]
+    # dialogs = [dialog for dataset in dataset.values() for dialog in dataset]
+    # dialog =  random.choice(dialogs)
+    # # personality = random.choice(personalities)
+    # personality = dialog['personality']
+    # comet_annotations = dialog["coment_annotation"]
+    # for sent in comet_annotations:
+    #     sent_beams = []
+    #     for effect in sent['comet'].items():
+    #         # not sure is ' .' should be added or '.'
+    #         # tokenizer realize different tokens for each of the above options
+    #         # beams = [x+' .' for x in effect[1]['beams']]
+    #         if args.comet_greedy:
+    #             sent_beams += [effect[1]['beams'][0]]
+    #         else:
+    #             sent_beams += effect[1]['beams']
+    # personality += sent_beams
+    # print(personality)
+    # logger.info("Selected personality: %s", tokenizer.decode(chain(*personality)))
 
-    history = []
-    while True:
-        raw_text = input(">>> ")
-        while not raw_text:
-            print('Prompt should not be empty!')
-            raw_text = input(">>> ")
-        history.append(tokenizer.encode(raw_text))
-        with torch.no_grad():
-            out_ids = sample_sequence(personality, history, tokenizer, model, args)
-        history.append(out_ids)
-        history = history[-(2*args.max_history+1):]
-        out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
-        print(out_text)
+    # history = []
+    # while True:
+    #     raw_text = input(">>> ")
+    #     while not raw_text:
+    #         print('Prompt should not be empty!')
+    #         raw_text = input(">>> ")
+    #     history.append(tokenizer.encode(raw_text))
+    #     with torch.no_grad():
+    #         out_ids = sample_sequence(personality, history, tokenizer, model, args)
+    #     history.append(out_ids)
+    #     history = history[-(2*args.max_history+1):]
+    #     out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
+    #     print(out_text)
 
 
 if __name__ == "__main__":
