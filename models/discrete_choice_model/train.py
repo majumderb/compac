@@ -91,6 +91,7 @@ def train():
     parser.add_argument("--do_eval", action='store_true', help="Do Evaluation")
     parser.add_argument("--no_persona", action='store_true', help="No Persona Evaluation")
     parser.add_argument("--no_comet_persona", action='store_true', help="No Persona Evaluation")
+    parser.add_argument("--uniform-prior", action='store_true', help="Uniform prior")
     parser.add_argument("--log_dir", type=str, default="", required=True, help="Provide a log dir")
     args = parser.parse_args()
 

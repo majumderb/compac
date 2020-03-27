@@ -8,13 +8,12 @@ import torch.nn.functional as F
 class LatentMarginalizedModel(nn.Module):
     def __init__(self,
                  args,
-                 generator_class,
-                 uniform_prior=False):
+                 generator_class):
         super().__init__()
 
         self.args = args
-        self.uniform_prior = uniform_prior
-        if not uniform_prior:
+        self.uniform_prior = args.uniform_prior
+        if not self.uniform_prior:
             self.roberta_model = RobertaForSequenceClassification.from_pretrained('roberta-base', output_hidden_states=True)
 
         self.gpt2_model = generator_class.from_pretrained(args.model_checkpoint)
