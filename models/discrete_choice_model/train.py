@@ -189,7 +189,7 @@ def train():
             optimizer.step()
             optimizer.zero_grad()
         
-        return loss.item(), math.exp(lm_loss.item())
+        return loss.item(), lm_loss.item(), mc_loss.item(), math.exp(lm_loss.item())
     
     trainer = Engine(update)
 
@@ -228,7 +228,9 @@ def train():
 
     # Prepare metrics - note how we compute distributed metrics
     RunningAverage(output_transform=lambda x: x[0]).attach(trainer, "loss")
-    RunningAverage(output_transform=lambda x: x[1]).attach(trainer, "perplexity")
+    RunningAverage(output_transform=lambda x: x[1]).attach(trainer, "lm_loss")
+    RunningAverage(output_transform=lambda x: x[2]).attach(trainer, "mc_loss")
+    RunningAverage(output_transform=lambda x: x[3]).attach(trainer, "perplexity")
 
     metrics = {
         "nll": Loss(torch.nn.CrossEntropyLoss(ignore_index=-100), output_transform=lambda x: (x[0][0], x[1][0])),
@@ -252,7 +254,7 @@ def train():
 
     if args.local_rank in [-1, 0]:
         pbar = ProgressBar(persist=True)
-        pbar.attach(trainer, metric_names=["loss", "perplexity"])
+        pbar.attach(trainer, metric_names=["loss", "lm_loss", "mc_loss", "perplexity"])
         evaluator.add_event_handler(Events.COMPLETED, lambda _: pbar.log_message("Validation: %s" % pformat(evaluator.state.metrics)))
 
         log_dir = make_logdir(args.model_checkpoint, args.exp_name)
