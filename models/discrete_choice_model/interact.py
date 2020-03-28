@@ -54,7 +54,7 @@ def top_filtering(logits, top_k=0., top_p=0.9, threshold=-float('Inf'), filter_v
     return logits
 
 
-def sample_sequence(personality, history, tokenizer, model, args, current_output=None):
+def sample_sequence(personality, history, tokenizer, model, args, current_output=None, persona_choice=None):
     special_tokens_ids = tokenizer.convert_tokens_to_ids(SPECIAL_TOKENS)
     if current_output is None:
         current_output = []
@@ -70,8 +70,11 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
     # 1 x T
     history_flat_tensor = torch.tensor([ROBERTA_START] + list(chain(*history))).unsqueeze(0).to(args.device)
 
-    prior_z = model.get_prob_z_given_H(padded_persona_tensor, history_flat_tensor) # B x P
-    z = torch.argmax(prior_z, dim=1).item()
+    if persona_choice:
+        z = int(persona_choice)
+    else:
+        prior_z = model.get_prob_z_given_H(padded_persona_tensor, history_flat_tensor) # B x P
+        z = torch.argmax(prior_z, dim=1).item()
 
     selected_personality = [personality[z]]
     print('Selected Persona {}'.format(z))
@@ -196,8 +199,9 @@ def run():
             print('Prompt should not be empty!')
             raw_text = input(">>> ")
         history.append(tokenizer.encode(raw_text))
+        raw_choice = input("Give persona choice >>> ")
         with torch.no_grad():
-            out_ids = sample_sequence(personality, history, tokenizer, model, args)
+            out_ids = sample_sequence(personality, history, tokenizer, model, args, persona_choice=raw_choice)
         history.append(out_ids)
         history = history[-(2*args.max_history+1):]
         out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
