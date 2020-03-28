@@ -11,8 +11,7 @@ import torch.nn.functional as F
 
 from transformers import OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, GPT2LMHeadModel, GPT2Tokenizer
 from models.discrete_choice_model.train import add_special_tokens_
-from models.discrete_choice_model.data import SPECIAL_TOKENS, build_input_from_segments, ATTR_TO_SPECIAL_TOKEN
-from models.discrete_choice_model.dataset import ROBERTA_START
+from models.discrete_choice_model.dataset import SPECIAL_TOKENS, build_input_from_segments, ATTR_TO_SPECIAL_TOKEN, ROBERTA_START
 from models.discrete_choice_model.utils import get_dataset, download_pretrained_model
 from models.discrete_choice_model.model import LatentMarginalizedModel
 
