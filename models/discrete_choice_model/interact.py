@@ -155,18 +155,18 @@ def run():
     #     new_k = k.replace('gpt2_model.', '').replace('', '')
     #     corrected_model_weights[k.replace('gpt2_model.', '')] = v
 
-    model.load_state_dict(model_weights, strict=True)
+    model.load_state_dict(model_weights, strict=False)
     print('Loaded model weights from {}'.format(model_checkpoint_path))
 
     model.to(args.device)
 
-    # logger.info("Sample a personality")
-    # dataset = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
+    logger.info("Sample a personality")
+    dataset = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
     # # personalities = [dialog["personality"] for dataset in dataset.values() for dialog in dataset]
-    # dialogs = [dialog for dataset in dataset.values() for dialog in dataset]
-    # dialog =  random.choice(dialogs)
+    dialogs = [dialog for dataset in dataset.values() for dialog in dataset]
+    dialog =  random.choice(dialogs)
     # # personality = random.choice(personalities)
-    # personality = dialog['personality']
+    personality = dialog['personality']
     # comet_annotations = dialog["coment_annotation"]
     # for sent in comet_annotations:
     #     sent_beams = []
@@ -179,22 +179,22 @@ def run():
     #         else:
     #             sent_beams += effect[1]['beams']
     # personality += sent_beams
-    # print(personality)
-    # logger.info("Selected personality: %s", tokenizer.decode(chain(*personality)))
+    print(personality)
+    logger.info("Selected personality: %s", tokenizer.decode(chain(*personality)))
 
-    # history = []
-    # while True:
-    #     raw_text = input(">>> ")
-    #     while not raw_text:
-    #         print('Prompt should not be empty!')
-    #         raw_text = input(">>> ")
-    #     history.append(tokenizer.encode(raw_text))
-    #     with torch.no_grad():
-    #         out_ids = sample_sequence(personality, history, tokenizer, model, args)
-    #     history.append(out_ids)
-    #     history = history[-(2*args.max_history+1):]
-    #     out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
-    #     print(out_text)
+    history = []
+    while True:
+        raw_text = input(">>> ")
+        while not raw_text:
+            print('Prompt should not be empty!')
+            raw_text = input(">>> ")
+        history.append(tokenizer.encode(raw_text))
+        with torch.no_grad():
+            out_ids = sample_sequence(personality, history, tokenizer, model, args)
+        history.append(out_ids)
+        history = history[-(2*args.max_history+1):]
+        out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
+        print(out_text)
 
 
 if __name__ == "__main__":
