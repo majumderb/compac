@@ -137,10 +137,13 @@ def run():
 
     tokenizer_class, model_class = (GPT2Tokenizer, GPT2LMHeadModel)
     tokenizer = tokenizer_class.from_pretrained(args.model_checkpoint_dir)
-    print('Tokenizer length: {}'.format(len(tokenizer.encoder)))
-    
+    orig_num_tokens = len(tokenizer.encoder)
+    print('Tokenizer length: {}'.format(orig_num_tokens))
+    num_added_tokens = tokenizer.add_special_tokens(ATTR_TO_SPECIAL_TOKEN)
+    print('Tokenizer new length: {}'.format(len(tokenizer.encoder)))
     model = LatentMarginalizedModel(training_args, generator_class=model_class)
-    add_special_tokens_(model, tokenizer)
+    model.gpt2_model.resize_token_embeddings(new_num_tokens=orig_num_tokens + num_added_tokens)
+    # add_special_tokens_(model, tokenizer)
 
     # Load model weights
     model_checkpoint_path = os.path.join(args.model_checkpoint_dir, args.load_checkpoint_from)
