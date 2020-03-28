@@ -98,13 +98,14 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
     return current_output
 
 '''
-python3 interact.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet.json --model gpt2 --model_checkpoint runs/Feb22_13-26-13_deepyeti_gpt2concat_comet/
+python3 -m models.discrete_choice_model.interact --dataset_path=--dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels_preprocessed.json --model=gpt2 --model_checkpoint_dir=models/discrete_choice_model/runs/Mar27_02-50-23_deepx_gpt2marginal_uniform_prior_fp16_NC_1 --load_checkpoint_from=checkpoint_mymodel_130408.pth
+
 '''
 
 def run():
     parser = ArgumentParser()
     parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
-    parser.add_argument("--dataset_cache", type=str, default='persona_comet', help="Path or url of the dataset cache")
+    parser.add_argument("--dataset_cache", type=str, default='persona_comet_weak_label_preprocessed', help="Path or url of the dataset cache")
     parser.add_argument("--model", type=str, default="openai-gpt", help="Model type (openai-gpt or gpt2)", choices=['openai-gpt', 'gpt2'])  # anything besides gpt2 will load openai-gpt
     parser.add_argument("--model_checkpoint_dir", type=str, default="", help="Path, url or short name of the model")
     parser.add_argument("--load_checkpoint_from", type=str, default="", help="Path, url or short name of the model")
