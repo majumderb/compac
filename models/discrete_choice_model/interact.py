@@ -155,11 +155,10 @@ def run():
     #     new_k = k.replace('gpt2_model.', '').replace('', '')
     #     corrected_model_weights[k.replace('gpt2_model.', '')] = v
 
-    model.load_state_dict(model_weights, strict=False)
+    model.load_state_dict(model_weights, strict=true)
     print('Loaded model weights from {}'.format(model_checkpoint_path))
 
     model.to(args.device)
-    add_special_tokens_(model, tokenizer)
 
     # logger.info("Sample a personality")
     # dataset = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
