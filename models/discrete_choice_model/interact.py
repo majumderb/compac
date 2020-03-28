@@ -107,7 +107,7 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
     return current_output
 
 '''
-python3 -m models.discrete_choice_model.interact --dataset_path=--dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels_preprocessed.json --model=gpt2 --model_checkpoint_dir=models/discrete_choice_model/runs/Mar27_02-50-23_deepx_gpt2marginal_uniform_prior_fp16_NC_1 --load_checkpoint_from=checkpoint_mymodel_130408.pth
+python3 -m models.discrete_choice_model.interact --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model=gpt2 --model_checkpoint_dir=models/discrete_choice_model/runs/Mar27_02-50-23_deepx_gpt2marginal_uniform_prior_fp16_NC_1 --load_checkpoint_from=checkpoint_mymodel_130408.pth
 
 '''
 
@@ -172,9 +172,14 @@ def run():
 
     logger.info("Sample a personality")
     dataset = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
+    # select train or validation split
+    dialogs = dataset['valid']
     # # personalities = [dialog["personality"] for dataset in dataset.values() for dialog in dataset]
-    dialogs = [dialog for dataset in dataset.values() for dialog in dataset]
-    dialog =  random.choice(dialogs)
+    # dialogs = [dialog for dataset in dataset.values() for dialog in dataset]
+    index = random.choice(range(len(dialogs)))
+    print('Retrieved dialog index: {}'.format(index))
+    dialog =  dialogs[index]
+
     # # personality = random.choice(personalities)
     personality = dialog['personality']
     # comet_annotations = dialog["coment_annotation"]
