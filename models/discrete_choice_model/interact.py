@@ -155,7 +155,7 @@ def run():
     #     new_k = k.replace('gpt2_model.', '').replace('', '')
     #     corrected_model_weights[k.replace('gpt2_model.', '')] = v
 
-    model.load_state_dict(model_weights, strict=true)
+    model.load_state_dict(model_weights, strict=True)
     print('Loaded model weights from {}'.format(model_checkpoint_path))
 
     model.to(args.device)
