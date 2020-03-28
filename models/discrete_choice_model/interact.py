@@ -67,9 +67,9 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
         max_persona_len = max(max_persona_len, len(p))
 
     preprocess_persona = [[ROBERTA_START] + p  for p in personality]
-    padded_persona_tensor = torch.LongTensor([p + [0]*(max_persona_len - len(p)) for p in preprocess_persona], device=args.device).unsqueeze(0) 
+    padded_persona_tensor = torch.LongTensor([p + [0]*(max_persona_len - len(p)) for p in preprocess_persona]).unsqueeze(0).to(args.device) 
     # 1 x T
-    history_flat_tensor = torch.tensor([ROBERTA_START] + list(chain(*history)), device=args.device).unsqueeze(0)
+    history_flat_tensor = torch.tensor([ROBERTA_START] + list(chain(*history))).unsqueeze(0).to(args.device)
 
     prior_z = model.get_prob_z_given_H(padded_persona_tensor, history_flat_tensor) # B x P
     z = torch.argmax(prior_z, dim=1).item()
