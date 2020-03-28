@@ -143,12 +143,13 @@ def run():
     model_checkpoint_path = os.path.join(args.model_checkpoint_dir, args.load_checkpoint_from)
     model_weights = torch.load(
         model_checkpoint_path, map_location=lambda storage, loc: storage
-    )['state_dict']
-    corrected_model_weights = {}
-    for k, v in model_weights.items():
-        corrected_model_weights[k.replace('model.', '')] = v
+    )
+    # corrected_model_weights = {}
+    # for k, v in model_weights.items():
+    #     new_k = k.replace('gpt2_model.', '').replace('', '')
+    #     corrected_model_weights[k.replace('gpt2_model.', '')] = v
 
-    model.load_state_dict(corrected_model_weights, strict=False)
+    model.load_state_dict(model_weights, strict=False)
     print('Loaded model weights from {}'.format(model_checkpoint_path))
 
     model.to(args.device)
