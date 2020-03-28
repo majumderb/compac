@@ -136,7 +136,7 @@ def run():
     	torch.cuda.manual_seed(args.seed)
 
     tokenizer_class, model_class = (GPT2Tokenizer, GPT2LMHeadModel)
-    tokenizer = tokenizer_class.from_pretrained(args.model_checkpoint_dir)
+    tokenizer = tokenizer_class.from_pretrained('gpt2')
     orig_num_tokens = len(tokenizer.encoder)
     print('Tokenizer length: {}'.format(orig_num_tokens))
     num_added_tokens = tokenizer.add_special_tokens(ATTR_TO_SPECIAL_TOKEN)

@@ -154,20 +154,6 @@ def get_data_loaders(args, tokenizer):
     print("Valid dataset (Batch, Candidates, Seq length): {}".format(valid_dataset.tensors[0].shape))
     return train_loader, valid_loader, train_sampler, valid_sampler
 
-class PersonaChatDataset(Dataset):
-    def __init__(
-            self,
-            args,  # Bookkeeping
-            tokenizer,
-            debug_mode: bool = False,  # Debugging
-            sample: int = None,
-            **kwargs,
-    ):
-        super().__init__()
-
-
-
-
 
 def preprocess_comet_dataset(dataset_path):
     with open(dataset_path, "r+", encoding="utf-8") as f:
