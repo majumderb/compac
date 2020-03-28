@@ -49,6 +49,7 @@ def get_dataset(tokenizer, dataset_path, dataset_cache):
     dataset_path = dataset_path
     dataset_dir = os.path.dirname(os.path.realpath(dataset_path))
     dataset_cache = os.path.join(dataset_dir, dataset_cache + '_cache_' + type(tokenizer).__name__)
+    print('Looking for cache at {}'.format(dataset_cache))
     if dataset_cache and os.path.isfile(dataset_cache):
         print("Load tokenized dataset from cache at {}".format(dataset_cache))
         dataset = torch.load(dataset_cache)
