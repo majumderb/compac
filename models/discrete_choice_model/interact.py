@@ -62,11 +62,11 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
 
     # 1 x P x T
     # pad persona
+    preprocess_persona = [[ROBERTA_START] + p  for p in personality]
     max_persona_len = 0
-    for p in personality:
+    for p in preprocess_persona:
         max_persona_len = max(max_persona_len, len(p))
 
-    preprocess_persona = [[ROBERTA_START] + p  for p in personality]
     padded_persona_tensor = torch.LongTensor([p + [0]*(max_persona_len - len(p)) for p in preprocess_persona]).unsqueeze(0).to(args.device) 
     # 1 x T
     history_flat_tensor = torch.tensor([ROBERTA_START] + list(chain(*history))).unsqueeze(0).to(args.device)
