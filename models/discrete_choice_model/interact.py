@@ -138,6 +138,7 @@ def run():
     tokenizer_class, model_class = (GPT2Tokenizer, GPT2LMHeadModel)
     tokenizer = tokenizer_class.from_pretrained(args.model_checkpoint_dir)
     model = LatentMarginalizedModel(training_args, generator_class=model_class)
+    add_special_tokens_(model, tokenizer)
 
     # Load model weights
     model_checkpoint_path = os.path.join(args.model_checkpoint_dir, args.load_checkpoint_from)
@@ -153,7 +154,7 @@ def run():
     print('Loaded model weights from {}'.format(model_checkpoint_path))
 
     model.to(args.device)
-    # add_special_tokens_(model, tokenizer)
+    add_special_tokens_(model, tokenizer)
 
     # logger.info("Sample a personality")
     # dataset = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
