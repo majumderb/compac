@@ -66,15 +66,16 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
     for p in personality:
         max_persona_len = max(max_persona_len, len(p))
 
-    padded_persona = torch.LongTensor([p + [0]*(max_persona_len - len(p)) for p in personality])
-    personality_tensor = torch.tensor([[ROBERTA_START] + p  for p in padded_persona], device=args.device).unsqueeze(0) 
+    preprocess_persona = [[ROBERTA_START] + p  for p in personality]
+    padded_persona_tensor = torch.LongTensor([p + [0]*(max_persona_len - len(p)) for p in preprocess_persona], device=args.device).unsqueeze(0) 
     # 1 x T
     history_flat_tensor = torch.tensor([ROBERTA_START] + list(chain(*history)), device=args.device).unsqueeze(0)
 
-    prior_z = model.get_prob_z_given_H(personality_tensor, history_flat_tensor) # B x P
+    prior_z = model.get_prob_z_given_H(padded_persona_tensor, history_flat_tensor) # B x P
     z = torch.argmax(prior_z, dim=1).item()
 
     selected_personality = personality[z]
+    print('Selected Persona {}'.format(z))
 
     for i in range(args.max_length):
         instance = build_input_from_segments(selected_personality, history, current_output, tokenizer, with_eos=False)
