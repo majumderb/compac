@@ -91,6 +91,7 @@ class LatentMarginalizedModel(nn.Module):
                 log_probs_lm = torch.stack(log_probs_lm).T  # B x P
                 log_sum_exp_lm = torch.logsumexp(log_probs_lm, dim=1)  # logsumexp,  B
                 loss_lm = -1.0 * log_sum_exp_lm.mean()
+                loss_prior, reinforce_loss_lm = 0.0, 0.0
 
             elif self.training_type == TRAINING_TYPE_REINFORCE:
                 # not when using reinforce, loss_lm is not log p(x) but log p(x|z=action) -- so be careful when compuing the perplexity
@@ -105,14 +106,14 @@ class LatentMarginalizedModel(nn.Module):
                 loss_prior = - logprob_action * rewards # B
                 loss_prior = loss_prior.mean() # B
                 # sum the two losses. todo - use a weight on reinforce
-                loss_lm = loss_lm + loss_prior
+                reinforce_loss_lm = loss_lm + loss_prior
 
             # MC
             log_probs_mc = torch.stack(log_probs_mc).T
             log_sum_exp_mc = torch.logsumexp(log_probs_mc, dim=1)  # logsumexp
             loss_mc = -1.0 * log_sum_exp_mc.mean()
 
-            return loss_lm, loss_mc
+            return loss_lm, loss_mc, loss_prior, reinforce_loss_lm
 
 
         if generate:
