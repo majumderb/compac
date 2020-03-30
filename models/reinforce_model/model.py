@@ -49,13 +49,13 @@ class LatentMarginalizedModel(nn.Module):
             log_probs_lm = []
             log_probs_mc = []
 
-            z_iterator = range(input_ids.shape[1])
+            # z_iterator = range(input_ids.shape[1])
             if self.training_type == TRAINING_TYPE_MARGINALIZE:
                 z_iterator = range(input_ids.shape[1])
             elif self.training_type == TRAINING_TYPE_REINFORCE:
-                action, logprob_action = self.prior_model.sample()
+                action, logprob_action = self.prior_model.sample(z_given_h)
                 z_iterator = [action] # in case of reinforce, do fwd for only one value of z
-                z_given_h = z_given_h.detach() # do not uopdate prior through log likelihood since we are not marginalizing. we will instead udpate it through reinforce
+                z_given_h = z_given_h.detach() # do not update prior through log likelihood since we are not marginalizing. we will instead update it through reinforce
 
             for i in z_iterator:
                 lm_logits, mc_logits, *_ = self.gpt2_model(
