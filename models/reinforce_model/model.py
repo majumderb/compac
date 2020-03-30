@@ -93,7 +93,7 @@ class LatentMarginalizedModel(nn.Module):
                 loss_lm = -1.0 * log_sum_exp_lm.mean()
 
             elif self.training_type == TRAINING_TYPE_REINFORCE:
-                # not when using reinforce, loss_lm is not log p(x) but log p(x\z=action) -- so be careful when compuing the perplexity
+                # not when using reinforce, loss_lm is not log p(x) but log p(x|z=action) -- so be careful when compuing the perplexity
                 # LM
                 # log_probs_lm: P=1 values for B=batch_size. pick the first and only value
                 log_probs_lm = log_probs_lm[0] #log_probs_lm:B
