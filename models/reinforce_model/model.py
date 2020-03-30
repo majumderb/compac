@@ -22,6 +22,9 @@ class LatentMarginalizedModel(nn.Module):
         self.criterion_mc = torch.nn.CrossEntropyLoss(reduction='none')
         self.training_type = TRAINING_TYPE_REINFORCE #'marginalize' # or reinforce
         assert self.training_type in [TRAINING_TYPE_REINFORCE,TRAINING_TYPE_MARGINALIZE]
+        self.running_mean = None #-- todo: maybe init as 0?
+        self.use_baseline = True
+        # todo - self.moving_avg_ratio = ...
 
     def forward(
             self,
@@ -102,6 +105,13 @@ class LatentMarginalizedModel(nn.Module):
                 loss_lm = -1.0 * log_sum_exp_lm.mean()
                 # reward: we want to reward those actions which lead to higher
                 rewards = log_sum_exp_lm.detach() # important to detach -> to not update the conditional model
+                if self.use_baseline:
+                    if not self.running_mean:
+                        self.running_mean = rewards.mean().detach() # 1
+                    else:
+                        ratio = 0.99
+                        self.running_mean = ratio*self.running_mean + (1.0-ratio)*rewards.mean()
+                    rewards = rewards - self.running_mean.detach() # B
                 # todo - should do some sort of baseline computation for stable reinforce training
                 loss_prior = - logprob_action * rewards # B
                 loss_prior = loss_prior.mean() # B
