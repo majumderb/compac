@@ -20,7 +20,7 @@ class LatentMarginalizedModel(nn.Module):
         self.gpt2_model = generator_class.from_pretrained(args.model_checkpoint)
         self.criterion_lm = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
         self.criterion_mc = torch.nn.CrossEntropyLoss(reduction='none')
-        self.training_type = TRAINING_TYPE_MARGINALIZE #'marginalize' # or reinforce
+        self.training_type = TRAINING_TYPE_REINFORCE #'marginalize' # or reinforce
         assert self.training_type in [TRAINING_TYPE_REINFORCE,TRAINING_TYPE_MARGINALIZE]
 
     def forward(
