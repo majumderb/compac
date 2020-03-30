@@ -119,12 +119,16 @@ class LatentMarginalizedModel(nn.Module):
                         ratio = 0.99
                         self.running_mean = ratio*self.running_mean + (1.0-ratio)*rewards.mean()
                     rewards = rewards - self.running_mean.detach() # B
+                
+                print(type(rewards))
+                print(type(logprob_action))
                 # todo - should do some sort of baseline computation for stable reinforce training
                 loss_prior = - logprob_action * rewards # B
+                print(type(loss_prior))
                 loss_prior = loss_prior.mean() # B
                 # sum the two losses. todo - use a weight on reinforce
                 reinforce_loss_lm = loss_lm + loss_prior
-                # print(type(reinforce_loss_lm))
+                print(type(reinforce_loss_lm))
 
             # MC
             log_probs_mc = torch.stack(log_probs_mc).T
