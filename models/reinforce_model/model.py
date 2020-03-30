@@ -123,7 +123,7 @@ class LatentMarginalizedModel(nn.Module):
                 loss_prior = - logprob_action * rewards # B
                 loss_prior = loss_prior.mean() # B
                 # sum the two losses. todo - use a weight on reinforce
-                reinforce_loss_lm = loss_lm + 0.99*loss_prior
+                reinforce_loss_lm = loss_lm + loss_prior
                 # print(type(reinforce_loss_lm))
 
             # MC
