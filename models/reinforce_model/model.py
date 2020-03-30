@@ -23,7 +23,7 @@ class LatentMarginalizedModel(nn.Module):
         self.training_type = TRAINING_TYPE_MARGINALIZE
         # override
         if args.training_type == 'reinforce':
-            training_type = TRAINING_TYPE_REINFORCE
+            self.training_type = TRAINING_TYPE_REINFORCE
         else:
             raise Exception('Invalid training type')
 
@@ -101,7 +101,7 @@ class LatentMarginalizedModel(nn.Module):
                 log_probs_lm = torch.stack(log_probs_lm).T  # B x P
                 log_sum_exp_lm = torch.logsumexp(log_probs_lm, dim=1)  # logsumexp,  B
                 loss_lm = -1.0 * log_sum_exp_lm.mean()
-                loss_prior, reinforce_loss_lm = 0.0, 0.0
+                loss_prior, reinforce_loss_lm = torch.Tensor([0.0]).to(self.args.device), torch.Tensor([0.0]).to(self.args.device)
 
             elif self.training_type == TRAINING_TYPE_REINFORCE:
                 # not when using reinforce, loss_lm is not log p(x) but log p(x|z=action) -- so be careful when compuing the perplexity
@@ -120,15 +120,11 @@ class LatentMarginalizedModel(nn.Module):
                         self.running_mean = ratio*self.running_mean + (1.0-ratio)*rewards.mean()
                     rewards = rewards - self.running_mean.detach() # B
                 
-                print(type(rewards))
-                print(type(logprob_action))
                 # todo - should do some sort of baseline computation for stable reinforce training
                 loss_prior = - logprob_action * rewards # B
-                print(type(loss_prior))
                 loss_prior = loss_prior.mean() # B
                 # sum the two losses. todo - use a weight on reinforce
-                reinforce_loss_lm = loss_lm + loss_prior
-                print(type(reinforce_loss_lm))
+                reinforce_loss_lm = loss_lm + self.reinforce_loss_coef*loss_prior
 
             # MC
             log_probs_mc = torch.stack(log_probs_mc).T
