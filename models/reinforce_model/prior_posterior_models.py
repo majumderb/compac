@@ -13,7 +13,7 @@ class PriorModel(nn.Module):
         self.args = args
         self.uniform_prior = args.uniform_prior
         if not self.uniform_prior:
-            self.roberta_model = RobertaForSequenceClassification.from_pretrained('roberta-base', , output_hidden_states=True)
+            self.roberta_model = RobertaForSequenceClassification.from_pretrained('roberta-base', output_hidden_states=True)
 
 
     def get_prob_z_given_H(self, persona, history):
