@@ -123,8 +123,8 @@ class LatentMarginalizedModel(nn.Module):
                 loss_prior = - logprob_action * rewards # B
                 loss_prior = loss_prior.mean() # B
                 # sum the two losses. todo - use a weight on reinforce
-                reinforce_loss_lm = loss_lm + self.reinforce_loss_coef*loss_prior
-                print(type(reinforce_loss_lm))
+                reinforce_loss_lm = loss_lm + 0.99*loss_prior
+                # print(type(reinforce_loss_lm))
 
             # MC
             log_probs_mc = torch.stack(log_probs_mc).T
