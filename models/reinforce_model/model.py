@@ -20,11 +20,18 @@ class LatentMarginalizedModel(nn.Module):
         self.gpt2_model = generator_class.from_pretrained(args.model_checkpoint)
         self.criterion_lm = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
         self.criterion_mc = torch.nn.CrossEntropyLoss(reduction='none')
-        self.training_type = TRAINING_TYPE_REINFORCE #'marginalize' # or reinforce
+        self.training_type = TRAINING_TYPE_MARGINALIZE
+        # override
+        if args.training_type == 'reinforce':
+            training_type = TRAINING_TYPE_REINFORCE
+        else:
+            raise Exception('Invalid training type')
+
         assert self.training_type in [TRAINING_TYPE_REINFORCE,TRAINING_TYPE_MARGINALIZE]
         self.running_mean = None #-- todo: maybe init as 0?
-        self.use_baseline = True
-        # todo - self.moving_avg_ratio = ...
+        self.use_baseline = args.use_baseline
+        self.moving_avg_ratio = args.moving_avg_ratio
+        self.reinforce_loss_coef = args.reinforce_loss_coef
 
     def forward(
             self,
@@ -116,7 +123,7 @@ class LatentMarginalizedModel(nn.Module):
                 loss_prior = - logprob_action * rewards # B
                 loss_prior = loss_prior.mean() # B
                 # sum the two losses. todo - use a weight on reinforce
-                reinforce_loss_lm = loss_lm + loss_prior
+                reinforce_loss_lm = loss_lm + self.reinforce_loss_coef*loss_prior
 
             # MC
             log_probs_mc = torch.stack(log_probs_mc).T
