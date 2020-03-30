@@ -192,12 +192,6 @@ def train():
         if engine.state.iteration % args.gradient_accumulation_steps == 0:
             optimizer.step()
             optimizer.zero_grad()
-        
-        print(type(loss))
-        print(type(lm_loss))
-        print(type(mc_loss))
-        print(type(loss_prior))
-        print(type(conditional_lm_loss))
 
         return loss.item(), lm_loss.item(), mc_loss.item(), math.exp(lm_loss.item()), loss_prior.item(), conditional_lm_loss.item()
     
