@@ -3,7 +3,7 @@ from transformers import RobertaForSequenceClassification
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from models.reinforce_model.prior_posterior_models import PriorModel
+from models.reinforce_model.prior_posterior_models import PriorRobertaModel, PriorBoWModel
 # from prior_posterior_models import PriorModel
 
 TRAINING_TYPE_MARGINALIZE = 'marginalize'
@@ -16,7 +16,13 @@ class LatentMarginalizedModel(nn.Module):
         super().__init__()
 
         self.args = args
-        self.prior_model = PriorModel(args)
+        if args.prior_model == 'bow':
+            self.prior_model = PriorBoWModel(args)
+        elif args.prior_model == 'roberta':
+            self.prior_model = PriorRobertaModel(args)
+        else:
+            raise Exception('Invalid prior model')
+
         self.gpt2_model = generator_class.from_pretrained(args.model_checkpoint)
         self.criterion_lm = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
         self.criterion_mc = torch.nn.CrossEntropyLoss(reduction='none')

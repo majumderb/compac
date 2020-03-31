@@ -40,25 +40,15 @@ def add_special_tokens_(model, tokenizer):
 
 '''
 deepy
-distributed (update)
-
-python3 -m torch.distributed.launch --nproc_per_node=2 train.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --max_history=2 --n_epochs=1 --num_candidates=4 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1
-
-only eval (update):
-
-python3 train.py --dataset_path=/data2/bodhi/data/personachat/comet_persona_outputs_v1/personachat_self_original_comet_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/Feb24_22-43-01_deepyeti_gpt2concat_comet_p_b1 --max_history=2 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5  --num_beams 1 --exp_name test --do_eval
-
-train 1 gpu:
-
-data loading test:
-> python3 train.py --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --max_history=2 --n_epochs=1 --num_candidates=4 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1 --test_run_num 1  --num_beams 1 --exp_name test --no_comet_persona
-
-data loading test w comet:
-> python3 train.py --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --max_history=2 --n_epochs=1 --num_candidates=4 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1 --test_run_num 1  --num_beams 5 --exp_name test
 
 train:
-> python3 -m models.discrete_choice_model.train --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --max_history=2 --n_epochs=3 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --exp_name marginal --no_comet_persona --do_train
+TEST run
+> python3 -m models.reinforce_model.train --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --n_epochs=1 --num_candidates=1 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --no_comet_persona --do_train --training_type=reinforce --use_baseline --moving_avg_ratio=0.99 --reinforce_loss_coef=0.99  --test_run_num 1 --log_dir models/reinforce_model/ --exp_name reinforce_TEST
 
+Final run
+python3 -m models.reinforce_model.train --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --n_epochs=1 --num_candidates=1 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --no_comet_persona --do_train --training_type=reinforce --use_baseline --moving_avg_ratio=0.99 --reinforce_loss_coef=0.99 --log_dir models/reinforce_model/ --exp_name reinforce_TEST
+
+==
 train w comet:
 > python3 train.py --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --max_history=2 --n_epochs=1 --num_candidates=4 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5 --exp_name test --do_train --do_eval
 
@@ -96,6 +86,7 @@ def train():
     parser.add_argument("--use_baseline", action='store_true', help="Use baseline")
     parser.add_argument("--moving_avg_ratio", type=float, default=0.99, help="Moving avg ratio for running mean baseline")
     parser.add_argument("--reinforce_loss_coef", type=float, default=0.99, help="Loss coef for reinforce")
+    parser.add_argument("--prior_model", type=str, default="bow", help="Prior model selection")
     parser.add_argument("--log_dir", type=str, default="", required=True, help="Provide a log dir")
     args = parser.parse_args()
 
