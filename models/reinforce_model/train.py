@@ -150,6 +150,7 @@ def train():
             collate_fn=collate_dialog,
             pin_memory=True)
 
+    print('Data loaded. Starting training')
     # train_loader, val_loader, train_sampler, valid_sampler = get_data_loaders(args, tokenizer)
 
     # Training function and trainer
