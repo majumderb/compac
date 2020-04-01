@@ -5,6 +5,7 @@ from pprint import pformat
 from argparse import ArgumentParser
 from collections import defaultdict
 from itertools import chain
+from datetime import datetime
 
 import torch
 from torch.nn.parallel import DistributedDataParallel
@@ -128,6 +129,7 @@ def train():
         model = DistributedDataParallel(model, device_ids=[args.local_rank], output_device=args.local_rank)
 
     print("Prepare datasets")
+    start = datetime.now()
 
     train_dataset = PersonaChatDataset(args, tokenizer, split='train')
     if args.do_eval:
@@ -150,7 +152,7 @@ def train():
             collate_fn=collate_dialog,
             pin_memory=True)
 
-    print('Data loaded. Starting training')
+    print('{} - Data loaded. Starting training'.format(datetime.now() - start))
     # train_loader, val_loader, train_sampler, valid_sampler = get_data_loaders(args, tokenizer)
 
     # Training function and trainer
