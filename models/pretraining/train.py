@@ -71,6 +71,7 @@ def train():
     parser.add_argument("--no_comet_persona", action='store_true', help="No Persona Evaluation")
     parser.add_argument("--uniform_prior", action='store_true', help="Uniform prior")
     parser.add_argument("--log_dir", type=str, default="", required=True, help="Provide a log dir")
+    parser.add_argument("--prior_model", type=str, default="bow", help="Prior model selection")
     args = parser.parse_args()
 
     # logging is set to INFO (resp. WARN) for main (resp. auxiliary) process. logger.info => log main process only, logger.warning => log all processes
