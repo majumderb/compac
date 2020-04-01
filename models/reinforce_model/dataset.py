@@ -19,7 +19,7 @@ MODEL_INPUTS = ["input_ids", "mc_token_ids", "lm_labels", "mc_labels", "token_ty
 PADDED_INPUTS = ["input_ids", "lm_labels", "token_type_ids"]
 EFFECTS = ['xAttr', 'xEffect', 'xIntent', 'xNeed', 'xReact', 'xWant']
 PERSONA_MAX_LENGTH = 50
-MAX_NUM_PERSONA = 200
+MAX_NUM_PERSONA = 225
 
 def pad_dataset(dataset, padding=0):
     """ Pad the dataset. This could be optimized by defining a Dataset class and padding at the batch level, but this is simpler. """
