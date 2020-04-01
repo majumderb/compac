@@ -93,19 +93,19 @@ class PriorPretrainingModel(nn.Module):
         token_type_ids: B x P x C x T 
         '''
 
-        print("mc_token_ids : ", mc_token_ids.size())
-        print("persona : ", persona.size())
-        print("history : ", history.size())
-        print("mc_token_ids = ", mc_token_ids)
-        print("mc_labels : ", mc_labels.size())
-        print("mc_labels = ", mc_labels)
+        # print("mc_token_ids : ", mc_token_ids.size())
+        # print("persona : ", persona.size())
+        # print("history : ", history.size())
+        # print("mc_token_ids = ", mc_token_ids)
+        # print("mc_labels : ", mc_labels.size())
+        # print("mc_labels = ", mc_labels)
         mc_token_ids_gt = mc_token_ids[:,:,0]
-        print("mc_token_ids_gt: ", mc_token_ids_gt.size())
+        # print("mc_token_ids_gt: ", mc_token_ids_gt.size())
         z_given_h = self.get_score_z_given_H(persona, history) # B x P - unnormalized scores
-        print("****** z_given_h = ", z_given_h)
+        # print("****** z_given_h = ", z_given_h)
         desired_z = self.get_score_z_given_H(persona, mc_token_ids_gt) # B x P - unnormalized scores
-        print("****** desired_z = ", desired_z)
+        # print("****** desired_z = ", desired_z)
         loss_prior_pretraining = self.criterion_mc(z_given_h, desired_z)
-        print("****** loss_prior_pretraining = ", loss_prior_pretraining)
+        # print("****** loss_prior_pretraining = ", loss_prior_pretraining)
         # mc_token_ids = mc_token_ids[:, i, ...].contiguous()
         return loss_prior_pretraining
