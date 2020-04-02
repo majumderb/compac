@@ -2,18 +2,23 @@ from transformers import (AdamW, OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer,
                                   GPT2DoubleHeadsModel, GPT2Tokenizer, WEIGHTS_NAME, CONFIG_NAME)
 from argparse import ArgumentParser
 from tqdm import tqdm
+from datetime import datetime
 
-from utils import get_dataset, make_logdir
-from data import get_data_loaders
-from data import PADDED_INPUTS, ATTR_TO_SPECIAL_TOKEN
-from train import add_special_tokens_
+from torch.utils.data import DataLoader
+from models.reinforce_model.utils import get_dataset, make_logdir
+from models.reinforce_model.data import PADDED_INPUTS, ATTR_TO_SPECIAL_TOKEN
+from models.reinforce_model.dataset import PersonaChatDataset, collate_dialog
+from models.reinforce_model.train import add_special_tokens_
+from models.reinforce_model.model import LatentMarginalizedModel
 
 import torch
+import math
 
 parser = ArgumentParser()
 parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
 parser.add_argument("--dataset_cache", type=str, default='persona_comet_weak_label_preprocessed', help="Path or url of the dataset cache")
 parser.add_argument("--model_checkpoint", type=str, default="openai-gpt", help="Path, url or short name of the model")
+parser.add_argument("--load_checkpoint_from", type=str, default="", help="Path of the model")
 parser.add_argument("--num_candidates", type=int, default=2, help="Number of candidates for training")
 parser.add_argument("--max_history", type=int, default=2, help="Number of previous exchanges to keep in history")
 parser.add_argument("--train_batch_size", type=int, default=4, help="Batch size for training")
@@ -36,6 +41,8 @@ parser.add_argument("--do_train", action='store_true', help="Do training")
 parser.add_argument("--do_eval", action='store_true', help="Do Evaluation")
 parser.add_argument("--no_persona", action='store_true', help="No Persona Evaluation")
 parser.add_argument("--no_comet_persona", action='store_true', help="No Persona Evaluation")
+parser.add_argument("--training_type", type=str, default="", help="Marginalize or Reinforce")
+parser.add_argument("--prior_model", type=str, default="bow", help="Prior model selection")
 args = parser.parse_args()
 
 
@@ -46,48 +53,80 @@ tokenizer_class = GPT2Tokenizer if "gpt2" in args.model_checkpoint else OpenAIGP
 tokenizer = tokenizer_class.from_pretrained(args.model_checkpoint)
 
 model_class = GPT2DoubleHeadsModel if "gpt2" in args.model_checkpoint else OpenAIGPTDoubleHeadsModel
-print('Loading model from checkpoint {}'.format(args.model_checkpoint))
-model = model_class.from_pretrained(args.model_checkpoint)
+if args.do_eval and not args.do_train:
+    print('Loading model from checkpoint {}'.format(args.model_checkpoint))
+# model = model_class.from_pretrained(args.model_checkpoint)
+# model.to(args.device)
+
+args.training_type = 'marginalize' # to make sure we are marginalizing 
+tokenizer_class, model_class = (GPT2Tokenizer, GPT2LMHeadModel)
+tokenizer = tokenizer_class.from_pretrained('gpt2')
+orig_num_tokens = len(tokenizer.encoder)
+print('Tokenizer length: {}'.format(orig_num_tokens))
+num_added_tokens = tokenizer.add_special_tokens(ATTR_TO_SPECIAL_TOKEN)
+print('Tokenizer new length: {}'.format(len(tokenizer.encoder)))
+model = LatentMarginalizedModel(training_args, generator_class=model_class)
+model.gpt2_model.resize_token_embeddings(new_num_tokens=orig_num_tokens + num_added_tokens)
+
+model_weights = torch.load(
+        args.model_checkpoint_path, map_location=lambda storage, loc: storage
+    )
+model.load_state_dict(model_weights, strict=False)
+print('Loaded model weights from {}'.format(args.model_checkpoint_path))
+
 model.to(args.device)
 
 # Add special tokens if they are not already added
-add_special_tokens_(model, tokenizer)
+# add_special_tokens_(model, tokenizer)
 
 print("Prepare datasets")
-train_loader, val_loader, train_sampler, valid_sampler = get_data_loaders(args, tokenizer)
+start = datetime.now()
+
+val_dataset = PersonaChatDataset(args, tokenizer, split='valid')
+
+val_loader = DataLoader(
+    val_dataset,
+    shuffle=False,
+    batch_size=args.valid_batch_size,
+    collate_fn=collate_dialog,
+    pin_memory=True)
+
+print('{} - Data loaded. Starting training'.format(datetime.now() - start))
 
 num_correct = 0.0
 num_examples = 0.0
+ppls = []
+
 for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
     model.eval()
     with torch.no_grad():
         batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
-        input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids = batch
         # print(tokenizer.decode(input_ids[0, -1, :].tolist()))
         # if we dont send labels to model, it doesnt return losses
-        lm_logits, mc_logits, *_ = model(
-            input_ids, token_type_ids=token_type_ids, mc_token_ids=mc_token_ids,
+        batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
+        input_ids, token_type_ids, lm_labels, mc_token_ids, mc_labels, persona, history = batch
+        
+        (_), (_), (_), (marginal_lm_loss) = model(
+            input_ids=input_ids,
+            token_type_ids=token_type_ids,
+            mc_token_ids=mc_token_ids,
+            lm_labels=lm_labels,
+            mc_labels=mc_labels,
+            persona=persona,
+            history=history
         )
-        lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
-        lm_labels_flat_shifted = lm_labels[..., 1:].contiguous().view(-1)
 
-        # collect multiple choice (mc) logits for accuracy
-        indices = torch.argmax(mc_logits, dim=1)
-        correct = torch.eq(indices, mc_labels).view(-1)
-        # print(list(correct.cpu().numpy()))
-    
-    num_correct += torch.sum(correct).item()
-    num_examples += correct.shape[0]
+        ppl = math.exp(marginal_lm_loss.item())
+        ppls.append(ppl)
 
-print("Accuracy: {}".format(num_correct / num_examples))
+print("Average PPL: {}".format(sum(ppls) / len(ppls))
 
-# (lm_logits_flat_shifted, mc_logits), (lm_labels_flat_shifted, mc_labels)
 
 
 """
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
 
-python3 eval.py --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --test_run_num 30  --no_comet_persona
+python3 -m models.reinforce_model.eval --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Mar31_06-16-00_deepx_gpt2reinforce0.8_prior_bow_ep20/checkpoint_mymodel_652050.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --no_comet_persona --training_type=marginalize --test_run_num 30
 
 w comet
 
