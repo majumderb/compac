@@ -119,11 +119,11 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
         ppl = math.exp(marginal_lm_loss.item())
         ppls.append(ppl)
 
-print("Average PPL: {}".format(sum(ppls) / len(ppls))
+print("Average PPL: {}".format(sum(ppls) / len(ppls)))
 
 
 
-"""
+'''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
 
 python3 -m models.reinforce_model.eval --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Mar31_06-16-00_deepx_gpt2reinforce0.8_prior_bow_ep20/checkpoint_mymodel_652050.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --no_comet_persona --training_type=marginalize --test_run_num 30
@@ -132,4 +132,4 @@ w comet
 
 python3 eval.py --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=/data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar06_00-00-11_deepyeti_gpt2weak_labels_w_comet --lm_coef=2.0 --max_history=2 --num_candidates=4 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --test_run_num 30
 
-"""
+'''
