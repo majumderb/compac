@@ -13,12 +13,15 @@ from models.reinforce_model.model import LatentMarginalizedModel
 
 import torch
 import math
+import os
 
 parser = ArgumentParser()
 parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
 parser.add_argument("--dataset_cache", type=str, default='persona_comet_weak_label_preprocessed', help="Path or url of the dataset cache")
-parser.add_argument("--model_checkpoint", type=str, default="openai-gpt", help="Path, url or short name of the model")
-parser.add_argument("--load_checkpoint_from", type=str, default="", help="Path of the model")
+parser.add_argument("--model", type=str, default="openai-gpt", help="Model type (openai-gpt or gpt2)", choices=['openai-gpt', 'gpt2'])  # anything besides gpt2 will load openai-gpt
+parser.add_argument("--model_checkpoint_dir", type=str, default="", help="Path, url or short name of the model")
+parser.add_argument("--load_checkpoint_from", type=str, default="", help="Path, url or short name of the model")
+
 parser.add_argument("--num_candidates", type=int, default=2, help="Number of candidates for training")
 parser.add_argument("--max_history", type=int, default=2, help="Number of previous exchanges to keep in history")
 parser.add_argument("--train_batch_size", type=int, default=4, help="Batch size for training")
@@ -48,18 +51,20 @@ args = parser.parse_args()
 
 args.distributed = (args.local_rank != -1)
 
+training_args = torch.load(os.path.join(args.model_checkpoint_dir, 'model_training_args.bin'))
+print('Loaded training args.')
+
 print("Prepare tokenizer, pretrained model and optimizer.")
-tokenizer_class = GPT2Tokenizer if "gpt2" in args.model_checkpoint else OpenAIGPTTokenizer # cant use Autotokenizer because checkpoint could be a Path
+tokenizer_class = GPT2Tokenizer # cant use Autotokenizer because checkpoint could be a Path
 tokenizer = tokenizer_class.from_pretrained(args.model_checkpoint)
 
-model_class = GPT2DoubleHeadsModel if "gpt2" in args.model_checkpoint else OpenAIGPTDoubleHeadsModel
 if args.do_eval and not args.do_train:
     print('Loading model from checkpoint {}'.format(args.model_checkpoint))
 # model = model_class.from_pretrained(args.model_checkpoint)
 # model.to(args.device)
 
 args.training_type = 'marginalize' # to make sure we are marginalizing 
-tokenizer_class, model_class = (GPT2Tokenizer, GPT2LMHeadModel)
+tokenizer_class, model_class = (GPT2Tokenizer, GPT2DoubleHeadsModel)
 tokenizer = tokenizer_class.from_pretrained('gpt2')
 orig_num_tokens = len(tokenizer.encoder)
 print('Tokenizer length: {}'.format(orig_num_tokens))
@@ -68,11 +73,12 @@ print('Tokenizer new length: {}'.format(len(tokenizer.encoder)))
 model = LatentMarginalizedModel(training_args, generator_class=model_class)
 model.gpt2_model.resize_token_embeddings(new_num_tokens=orig_num_tokens + num_added_tokens)
 
+model_checkpoint_path = os.path.join(args.model_checkpoint_dir, args.load_checkpoint_from)
 model_weights = torch.load(
-        args.model_checkpoint_path, map_location=lambda storage, loc: storage
+        model_checkpoint_path, map_location=lambda storage, loc: storage
     )
-model.load_state_dict(model_weights, strict=False)
-print('Loaded model weights from {}'.format(args.model_checkpoint_path))
+model.load_state_dict(model_weights, strict=True)
+print('Loaded model weights from {}'.format(model_checkpoint_path))
 
 model.to(args.device)
 
