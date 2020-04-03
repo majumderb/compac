@@ -18,7 +18,6 @@ import os
 parser = ArgumentParser()
 parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
 parser.add_argument("--dataset_cache", type=str, default='persona_comet_weak_label_preprocessed', help="Path or url of the dataset cache")
-parser.add_argument("--model", type=str, default="openai-gpt", help="Model type (openai-gpt or gpt2)", choices=['openai-gpt', 'gpt2'])  # anything besides gpt2 will load openai-gpt
 parser.add_argument("--model_checkpoint_dir", type=str, default="", help="Path, url or short name of the model")
 parser.add_argument("--load_checkpoint_from", type=str, default="", help="Path, url or short name of the model")
 
