@@ -97,6 +97,7 @@ print('{} - Data loaded. Starting training'.format(datetime.now() - start))
 num_correct = 0.0
 num_examples = 0.0
 ppls = []
+losses = []
 
 for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
     model.eval()
@@ -119,10 +120,11 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
 
         ppl = math.exp(marginal_lm_loss.item())
         ppls.append(ppl)
+        losses.append(marginal_lm_loss)
 
+print("Average Loss: {}".format(sum(losses) / len(losses)))
 print("Average PPL: {}".format(sum(ppls) / len(ppls)))
-
-
+print(losses)
 
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
