@@ -1,5 +1,5 @@
 from transformers import (AdamW, OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer,
-                                  GPT2DoubleHeadsModel, GPT2Tokenizer, WEIGHTS_NAME, CONFIG_NAME)
+                                  GPT2LMHeadModel, GPT2Tokenizer, WEIGHTS_NAME, CONFIG_NAME)
 from argparse import ArgumentParser
 from tqdm import tqdm
 from datetime import datetime
@@ -10,6 +10,7 @@ from models.reinforce_model.data import PADDED_INPUTS, ATTR_TO_SPECIAL_TOKEN
 from models.reinforce_model.dataset import PersonaChatDataset, collate_dialog
 from models.reinforce_model.train import add_special_tokens_
 from models.reinforce_model.model import LatentMarginalizedModel
+from models.reinforce_model.interact import sample_sequence
 
 import torch
 import math
@@ -64,7 +65,7 @@ print('Tokenizer length: {}'.format(orig_num_tokens))
 num_added_tokens = tokenizer.add_special_tokens(ATTR_TO_SPECIAL_TOKEN)
 print('Tokenizer new length: {}'.format(len(tokenizer.encoder)))
 
-model_class = GPT2DoubleHeadsModel
+model_class = GPT2LMHeadModel
 model = LatentMarginalizedModel(training_args, generator_class=model_class)
 model.gpt2_model.resize_token_embeddings(new_num_tokens=orig_num_tokens + num_added_tokens)
 
@@ -72,7 +73,7 @@ model_checkpoint_path = os.path.join(args.model_checkpoint_dir, args.load_checkp
 model_weights = torch.load(
         model_checkpoint_path, map_location=lambda storage, loc: storage
     )
-model.load_state_dict(model_weights, strict=True)
+model.load_state_dict(model_weights, strict=False)
 print('Loaded model weights from {}'.format(model_checkpoint_path))
 
 model.to(args.device)
@@ -83,14 +84,7 @@ model.to(args.device)
 print("Prepare datasets")
 start = datetime.now()
 
-val_dataset = PersonaChatDataset(args, tokenizer, split='valid')
-
-val_loader = DataLoader(
-    val_dataset,
-    shuffle=False,
-    batch_size=args.valid_batch_size,
-    collate_fn=collate_dialog,
-    pin_memory=True)
+val_dataset = PersonaChatDataset(args, tokenizer, split='valid', history_folded=True)
 
 print('{} - Data loaded. Starting training'.format(datetime.now() - start))
 
@@ -104,42 +98,12 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
     with torch.no_grad():
         input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates = item
 
-
-
-
-        item = tuple(input_tensor.to(args.device) for input_tensor in item)
-        # print(tokenizer.decode(input_ids[0, -1, :].tolist()))
-        # if we dont send labels to model, it doesnt return losses
-        batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
-        input_ids, token_type_ids, lm_labels, mc_token_ids, mc_labels, persona, history = batch
-        
-        logits = model(
-            input_ids=input_ids,
-            token_type_ids=token_type_ids,
-            generate=True
-        )
-
-        if isinstance(logits, tuple):  # for gpt2 and maybe others
-            logits = logits[0]
-        logits = logits[0, -1, :] / args.temperature
-        logits = top_filtering(logits, top_k=args.top_k, top_p=args.top_p)
-        probs = F.softmax(logits, dim=-1)
-
-        prev = torch.topk(probs, 1)[1] if args.no_sample else torch.multinomial(probs, 1)
-        if i < args.min_length and prev.item() in special_tokens_ids:
-            while prev.item() in special_tokens_ids:
-                if probs.max().item() == 1:
-                    warnings.warn("Warning: model generating special token with probability 1.")
-                    break  # avoid infinitely looping over special token
-                prev = torch.multinomial(probs, num_samples=1)
-
-        if prev.item() in special_tokens_ids:
-            break
-        current_output.append(prev.item())
-
-print("Average Loss: {}".format(sum(losses) / len(losses)))
-print("Average PPL: {}".format(sum(ppls) / len(ppls)))
-print(losses)
+        out_ids = sample_sequence(persona, history_folded, tokenizer, model, args, current_output=None, persona_choice=None)
+        out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
+        print('Generated: {}'.format(out_text))
+        ground_truth = [t for t in lm_labels[0][0] if t!= -100]
+        ground_truth_text = tokenizer.decode(ground_truth, skip_special_tokens=True)
+        print('Original: {}'.format(ground_truth_text))
 
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona

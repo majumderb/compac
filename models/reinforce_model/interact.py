@@ -54,14 +54,14 @@ def top_filtering(logits, top_k=0., top_p=0.9, threshold=-float('Inf'), filter_v
     return logits
 
 
-def sample_sequence(personality, history, tokenizer, model, args, current_output=None, persona_choice=None):
+def sample_sequence(personality, history, tokenizer, model, args, current_output=None, persona_choice=None, add_roberta_start=False):
     special_tokens_ids = tokenizer.convert_tokens_to_ids(SPECIAL_TOKENS)
     if current_output is None:
         current_output = []
 
     # 1 x P x T
     # pad persona
-    preprocess_persona = [[ROBERTA_START] + p  for p in personality]
+    preprocess_persona = [[ROBERTA_START] if add_roberta_start else [] + p  for p in personality]
     max_persona_len = 0
     for p in preprocess_persona:
         max_persona_len = max(max_persona_len, len(p))
