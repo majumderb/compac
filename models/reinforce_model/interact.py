@@ -73,7 +73,6 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
     if persona_choice:
         z = int(persona_choice)
     else:
-        print(padded_persona_tensor.shape)
         prior_z = model.prior_model.get_prob_z_given_H(padded_persona_tensor, history_flat_tensor) # B x P
         z = torch.argmax(prior_z, dim=1).item()
 
