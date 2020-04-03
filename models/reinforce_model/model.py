@@ -49,7 +49,6 @@ class LatentMarginalizedModel(nn.Module):
             lm_labels=None,
             mc_labels=None,
             interact=False,
-            generate=False,
             **kwargs):
         '''
         persona: B x P x T
@@ -148,13 +147,4 @@ class LatentMarginalizedModel(nn.Module):
                 token_type_ids=token_type_ids,
             )
 
-            return lm_logits
-        
-        if generate:
-            persona_choice = kwargs.get('persona_choice')
-            lm_logits = self.gpt2_model(
-                    input_ids[:, persona_choice, ...].contiguous(),
-                    token_type_ids=token_type_ids[:, persona_choice, ...].contiguous()
-                )
-            
             return lm_logits
