@@ -118,7 +118,7 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
 
         out_ids = sample_sequence(persona, history_folded, tokenizer, model, args, current_output=None, persona_choice=None)
         out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
-        print('Generated: {}'.format(out_text))
+        
         ground_truth = [t for t in lm_labels[0][0] if t!= -100]
         ground_truth_text = tokenizer.decode(ground_truth, skip_special_tokens=True)
 
