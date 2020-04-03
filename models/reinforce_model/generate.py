@@ -99,10 +99,15 @@ num_examples = 0.0
 ppls = []
 losses = []
 
-for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
+for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
     model.eval()
     with torch.no_grad():
-        batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
+        input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates = item
+
+
+
+
+        item = tuple(input_tensor.to(args.device) for input_tensor in item)
         # print(tokenizer.decode(input_ids[0, -1, :].tolist()))
         # if we dont send labels to model, it doesnt return losses
         batch = tuple(input_tensor.to(args.device) for input_tensor in batch)

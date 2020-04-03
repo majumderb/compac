@@ -20,7 +20,8 @@ MODEL_INPUTS = ["input_ids", "mc_token_ids", "lm_labels", "mc_labels", "token_ty
 PADDED_INPUTS = ["input_ids", "lm_labels", "token_type_ids"]
 EFFECTS = ['xAttr', 'xEffect', 'xIntent', 'xNeed', 'xReact', 'xWant']
 PERSONA_MAX_LENGTH = 50
-MAX_NUM_PERSONA = 300
+MAX_NUM_PERSONA = 5
+MAX_NUM_COMET_PERSONA = 300
 
 def pad_dataset(dataset, padding=0):
     """ Pad the dataset. This could be optimized by defining a Dataset class and padding at the batch level, but this is simpler. """
@@ -121,7 +122,10 @@ class PersonaChatDataset(Dataset):
                 if args.no_persona:
                     persona = [[]]
                 else:
-                    persona = persona + [[0]]*(MAX_NUM_PERSONA - len(persona))
+                    if args.no_comet_persona:
+                        persona = persona + [[0]]*(MAX_NUM_PERSONA - len(persona))
+                    else:    
+                        persona = persona + [[0]]*(MAX_NUM_COMET_PERSONA - len(persona))
                 for i, utterance in enumerate(dialog["utterances"]):
                     history = utterance["history"][-(2*args.max_history+1):]
                     for persona_sample in persona:
