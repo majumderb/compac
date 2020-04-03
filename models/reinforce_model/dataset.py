@@ -89,7 +89,7 @@ class PersonaChatDataset(Dataset):
         # for dataset_name, dataset in personachat.items():
         personachat_split = personachat[split]
         num_candidates = len(personachat_split[0]["utterances"][0]["candidates"])
-        if args.num_candidates > 0 and split == 'train':
+        if args.num_candidates > 0: #and split == 'train':
             num_candidates = min(args.num_candidates, num_candidates)
         
         if args.test_run_num > 0:
@@ -273,6 +273,7 @@ tokenizer.add_special_tokens(ATTR_TO_SPECIAL_TOKEN)
 import torch
 args = torch.load('/data2/bodhi/projects/persona-dialog/models/baseline_w_comet/runs/Mar03_00-35-44_deepyeti_gpt2test/model_training_args.bin')
 args.dataset_cache = 'persona_comet_weak_label_preprocessed'
+args.num_candidates = 1
 args.personality_permutations = 1
 args.test_run_num = -1
 args.dataset_path='/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json'
