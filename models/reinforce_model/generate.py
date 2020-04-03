@@ -46,6 +46,16 @@ parser.add_argument("--no_persona", action='store_true', help="No Persona Evalua
 parser.add_argument("--no_comet_persona", action='store_true', help="No Persona Evaluation")
 parser.add_argument("--training_type", type=str, default="", help="Marginalize or Reinforce")
 parser.add_argument("--prior_model", type=str, default="bow", help="Prior model selection")
+
+# generation
+parser.add_argument("--no_sample", action='store_true', help="Set to use greedy decoding instead of sampling")
+parser.add_argument("--max_length", type=int, default=20, help="Maximum length of the output utterances")
+parser.add_argument("--min_length", type=int, default=1, help="Minimum length of the output utterances")
+parser.add_argument("--seed", type=int, default=0, help="Seed")
+parser.add_argument("--temperature", type=int, default=0.7, help="Sampling softmax temperature")
+parser.add_argument("--top_k", type=int, default=0, help="Filter top-k tokens before sampling (<=0: no filtering)")
+parser.add_argument("--top_p", type=float, default=0.9, help="Nucleus filtering (top-p) before sampling (<=0.0: no filtering)")
+
 args = parser.parse_args()
 
 
@@ -108,10 +118,10 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
 
-python3 -m models.reinforce_model.eval --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Mar31_06-16-00_deepx_gpt2reinforce0.8_prior_bow_ep20/checkpoint_mymodel_652050.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --no_comet_persona --training_type=marginalize --test_run_num 30
+python3 -m models.reinforce_model.generate --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Mar31_06-16-00_deepx_gpt2reinforce0.8_prior_bow_ep20/checkpoint_mymodel_652050.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --no_comet_persona --training_type=marginalize --test_run_num 30
 
 w comet
 
-python3 -m models.reinforce_model.eval --dataset_path=/data3/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint_dir=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Apr01_15-15-56_deepx_gpt2reinforce0.8_prior_bow_comet/ --load_checkpoint_from=checkpoint_mymodel_86940.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --training_type=marginalize --test_run_num 30
+python3 -m models.reinforce_model.generate --dataset_path=/data3/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint_dir=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Apr01_15-15-56_deepx_gpt2reinforce0.8_prior_bow_comet/ --load_checkpoint_from=checkpoint_mymodel_86940.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --training_type=marginalize --test_run_num 30
 
 '''
