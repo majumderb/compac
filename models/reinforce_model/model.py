@@ -48,7 +48,7 @@ class LatentMarginalizedModel(nn.Module):
             mc_token_ids=None,
             lm_labels=None,
             mc_labels=None,
-            interact=False,
+            generate=False,
             **kwargs):
         '''
         persona: B x P x T
