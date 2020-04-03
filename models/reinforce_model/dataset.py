@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 from torch.utils.data import DataLoader, TensorDataset, Dataset
 from models.reinforce_model.utils import get_dataset, make_logdir, preprocess
 from datetime import datetime
+from tqdm import tqdm
 
 import numpy as np
 import torch
@@ -96,7 +97,7 @@ class PersonaChatDataset(Dataset):
         
         print('Restricted to {} dialogs'.format(len(personachat_split)))
 
-        for d_i, dialog in enumerate(personachat_split):
+        for d_i, dialog in tqdm(enumerate(personachat_split), total=len(personachat_split)):
             persona = dialog["personality"].copy()
             if not args.no_comet_persona:
                 comet_annotations = dialog["coment_annotation"]
@@ -265,7 +266,7 @@ if __name__ == "__main__":
 
 
 '''
-from models.discrete_choice_model.dataset import PersonaChatDataset, ATTR_TO_SPECIAL_TOKEN, collate_dialog
+from models.reinforce_model.dataset import PersonaChatDataset, ATTR_TO_SPECIAL_TOKEN, collate_dialog, build_input_from_segments
 from transformers import GPT2Tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 tokenizer.add_special_tokens(ATTR_TO_SPECIAL_TOKEN)
