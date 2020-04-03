@@ -135,6 +135,9 @@ class PersonaChatDataset(Dataset):
 
                     self.dataset["persona"].append([[ROBERTA_START] + p  for p in persona])
                     self.dataset["history"].append([ROBERTA_START] + list(chain(*history)))
+                    history_folded = kwargs.get('history_folded', False)
+                    if history_folded:
+                        self.dataset["history_folded"].append(history)
                     self.dataset["n_candidates"] = num_candidates
                     self.length += 1 
                 # persona = [persona[-1]] + persona[:-1]  # permuted personalities

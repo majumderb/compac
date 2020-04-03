@@ -48,7 +48,9 @@ class LatentMarginalizedModel(nn.Module):
             mc_token_ids=None,
             lm_labels=None,
             mc_labels=None,
-            generate=False):
+            interact=False,
+            generate=False,
+            **kwargs):
         '''
         persona: B x P x T
         input_ids: B x P x C x T
@@ -140,10 +142,19 @@ class LatentMarginalizedModel(nn.Module):
             return reinforce_loss_lm, loss_mc, loss_prior, loss_lm 
 
 
-        if generate:
+        if interact:
             lm_logits = self.gpt2_model(
                 input_ids=input_ids,
                 token_type_ids=token_type_ids,
             )
 
+            return lm_logits
+        
+        if generate:
+            persona_choice = kwargs.get('persona_choice')
+            lm_logits = self.gpt2_model(
+                    input_ids[:, persona_choice, ...].contiguous(),
+                    token_type_ids=token_type_ids[:, persona_choice, ...].contiguous()
+                )
+            
             return lm_logits

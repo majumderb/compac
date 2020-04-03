@@ -108,19 +108,29 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
         batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
         input_ids, token_type_ids, lm_labels, mc_token_ids, mc_labels, persona, history = batch
         
-        (_), (_), (_), (marginal_lm_loss) = model(
+        logits = model(
             input_ids=input_ids,
             token_type_ids=token_type_ids,
-            mc_token_ids=mc_token_ids,
-            lm_labels=lm_labels,
-            mc_labels=mc_labels,
-            persona=persona,
-            history=history
+            generate=True
         )
 
-        ppl = math.exp(marginal_lm_loss.item())
-        ppls.append(ppl)
-        losses.append(marginal_lm_loss)
+        if isinstance(logits, tuple):  # for gpt2 and maybe others
+            logits = logits[0]
+        logits = logits[0, -1, :] / args.temperature
+        logits = top_filtering(logits, top_k=args.top_k, top_p=args.top_p)
+        probs = F.softmax(logits, dim=-1)
+
+        prev = torch.topk(probs, 1)[1] if args.no_sample else torch.multinomial(probs, 1)
+        if i < args.min_length and prev.item() in special_tokens_ids:
+            while prev.item() in special_tokens_ids:
+                if probs.max().item() == 1:
+                    warnings.warn("Warning: model generating special token with probability 1.")
+                    break  # avoid infinitely looping over special token
+                prev = torch.multinomial(probs, num_samples=1)
+
+        if prev.item() in special_tokens_ids:
+            break
+        current_output.append(prev.item())
 
 print("Average Loss: {}".format(sum(losses) / len(losses)))
 print("Average PPL: {}".format(sum(ppls) / len(ppls)))
