@@ -167,19 +167,22 @@ class PersonaChatDataset(Dataset):
         multiplier = self.dataset['n_candidates'] * MAX_NUM_PERSONA
         items = []
         for name in self.dataset.keys():
-            if name not in ['n_candidates', 'mc_labels', 'persona', 'history']:
+            if name not in ['n_candidates', 'mc_labels', 'persona', 'history', 'history_folded']:
                 item = [self.dataset[name][index*multiplier:(index+1)*multiplier]]
                 items.append(item)
             elif name  == 'mc_labels':
                 items.append(self.dataset[name][index*MAX_NUM_PERSONA:(index+1)*MAX_NUM_PERSONA])
-            elif name in ['persona', 'history']:
+            elif name in ['persona', 'history', 'history_folded']:
                 items.append(self.dataset[name][index])
             elif name == 'n_candidates':
                 items.append(self.dataset[name])
         
-        input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates = items
-
-        return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates
+        if 'history_folded' in self.dataset.keys():
+            input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates = items
+            return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates
+        else:
+            input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates = items
+            return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates
 
 def collate_dialog(batch):
     '''
