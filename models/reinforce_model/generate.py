@@ -108,11 +108,23 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
     with torch.no_grad():
         input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates = item
 
+        history_text = ''
+        for h in history_folded:
+            history_text += '> ' + tokenizer.decode(h, skip_special_tokens=True) + "\n"
+        
+        persona_text = ''
+        for p in persona:
+            persona_text += '> ' + tokenizer.decode(p, skip_special_tokens=True) + "\n"
+
         out_ids = sample_sequence(persona, history_folded, tokenizer, model, args, current_output=None, persona_choice=None)
         out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
         print('Generated: {}'.format(out_text))
         ground_truth = [t for t in lm_labels[0][0] if t!= -100]
         ground_truth_text = tokenizer.decode(ground_truth, skip_special_tokens=True)
+
+        print('Persona: {}'.format(persona_text))
+        print('History: {}'.format(history_text))
+        print('Generated: {}'.format(out_text))
         print('Original: {}'.format(ground_truth_text))
 
 '''
