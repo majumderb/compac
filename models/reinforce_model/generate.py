@@ -118,7 +118,7 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
 
-python3 -m models.reinforce_model.generate --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Mar31_06-16-00_deepx_gpt2reinforce0.8_prior_bow_ep20/checkpoint_mymodel_652050.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --no_comet_persona --training_type=marginalize --test_run_num 30
+python3 -m models.reinforce_model.generate --dataset_path=/data3/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint_dir=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Mar31_06-16-00_deepx_gpt2reinforce0.8_prior_bow_ep20/ --load_checkpoint_from=checkpoint_mymodel_652050.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --no_comet_persona --training_type=marginalize --test_run_num 30
 
 w comet
 
