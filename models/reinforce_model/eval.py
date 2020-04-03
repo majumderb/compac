@@ -50,25 +50,21 @@ args = parser.parse_args()
 
 args.distributed = (args.local_rank != -1)
 
+args.training_type = 'marginalize' # to make sure we are marginalizing 
+
 training_args = torch.load(os.path.join(args.model_checkpoint_dir, 'model_training_args.bin'))
 print('Loaded training args.')
 
 print("Prepare tokenizer, pretrained model and optimizer.")
 tokenizer_class = GPT2Tokenizer # cant use Autotokenizer because checkpoint could be a Path
-tokenizer = tokenizer_class.from_pretrained(args.model_checkpoint)
-
-if args.do_eval and not args.do_train:
-    print('Loading model from checkpoint {}'.format(args.model_checkpoint))
-# model = model_class.from_pretrained(args.model_checkpoint)
-# model.to(args.device)
-
-args.training_type = 'marginalize' # to make sure we are marginalizing 
-tokenizer_class, model_class = (GPT2Tokenizer, GPT2DoubleHeadsModel)
 tokenizer = tokenizer_class.from_pretrained('gpt2')
+
 orig_num_tokens = len(tokenizer.encoder)
 print('Tokenizer length: {}'.format(orig_num_tokens))
 num_added_tokens = tokenizer.add_special_tokens(ATTR_TO_SPECIAL_TOKEN)
 print('Tokenizer new length: {}'.format(len(tokenizer.encoder)))
+
+model_class = GPT2LMHeadModel
 model = LatentMarginalizedModel(training_args, generator_class=model_class)
 model.gpt2_model.resize_token_embeddings(new_num_tokens=orig_num_tokens + num_added_tokens)
 
