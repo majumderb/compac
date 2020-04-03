@@ -141,7 +141,7 @@ class LatentMarginalizedModel(nn.Module):
             return reinforce_loss_lm, loss_mc, loss_prior, loss_lm 
 
 
-        if interact:
+        if generate:
             lm_logits = self.gpt2_model(
                 input_ids=input_ids,
                 token_type_ids=token_type_ids,
