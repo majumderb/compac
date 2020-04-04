@@ -91,8 +91,10 @@ class LatentMarginalizedModel(nn.Module):
 
                 ll_lm = -1.0 * self.criterion_lm(lm_logits_flat_shifted, lm_labels_flat_shifted) # B x C x T
                 ll_lm = ll_lm.view(lm_labels.size(0), -1).mean(-1) # B
+                # TODO --> should above be sum() instead of mean(): we want log p(x|z); above computes log p(x|z) / |x\
 
                 log_prob_x_given_z_h_lm = ll_lm + torch.log(z_given_h[:, i]) # B
+                # TODO -> change name from log_prob_x_given_z_h_lm to log_prob_x_z_given_h
                 log_probs_lm.append(log_prob_x_given_z_h_lm)
 
                 # MC
@@ -105,6 +107,9 @@ class LatentMarginalizedModel(nn.Module):
             # LM
             log_probs_lm = torch.stack(log_probs_lm).T  # B x P
             log_sum_exp_lm = torch.logsumexp(log_probs_lm, dim=1) # logsumexp,  B
+            # TODO: if using su instead of mean earlier, we might want to nornalize here by length.
+            # i.e. above values are log p(x). we might want to change them to log p(x) / |x|
+            # and then average across instances in a batch below
             loss_lm = -1.0 * log_sum_exp_lm.mean()
 
             # MC
