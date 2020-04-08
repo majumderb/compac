@@ -108,7 +108,7 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
         batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
         input_ids, token_type_ids, lm_labels, mc_token_ids, mc_labels, persona, history = batch
         
-        (_), (_), (_), (marginal_lm_loss) = model(
+        (_), (_), (_), (marginal_lm_loss), (num_labels) = model(
             input_ids=input_ids,
             token_type_ids=token_type_ids,
             mc_token_ids=mc_token_ids,
@@ -118,7 +118,7 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
             history=history
         )
 
-        ppl = math.exp(marginal_lm_loss.item())
+        ppl = math.exp(marginal_lm_loss.item() / num_labels.item())
         ppls.append(ppl)
         losses.append(marginal_lm_loss)
 
@@ -129,7 +129,7 @@ print(losses)
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
 
-python3 -m models.reinforce_model.eval --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Mar31_06-16-00_deepx_gpt2reinforce0.8_prior_bow_ep20/checkpoint_mymodel_652050.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --no_comet_persona --training_type=marginalize --test_run_num 30
+python3 -m models.reinforce_model.eval --dataset_path=/data3/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint_dir=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Mar31_06-16-00_deepx_gpt2reinforce0.8_prior_bow_ep20/ --load_checkpoint_from=checkpoint_mymodel_652050.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --no_comet_persona --training_type=marginalize --test_run_num 30
 
 w comet
 

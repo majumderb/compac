@@ -163,7 +163,7 @@ def train():
         batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
         input_ids, token_type_ids, lm_labels, mc_token_ids, mc_labels, persona, history = batch
         
-        (lm_loss), (mc_loss), (loss_prior), (conditional_lm_loss) = model(
+        (lm_loss), (mc_loss), (loss_prior), (conditional_lm_loss), (num_labels) = model(
             input_ids=input_ids,
             token_type_ids=token_type_ids,
             mc_token_ids=mc_token_ids,
@@ -187,7 +187,7 @@ def train():
             optimizer.step()
             optimizer.zero_grad()
 
-        return loss.item(), lm_loss.item(), mc_loss.item(), math.exp(lm_loss.item()), loss_prior.item(), conditional_lm_loss.item()
+        return loss.item(), lm_loss.item(), mc_loss.item(), loss_prior.item(), conditional_lm_loss.item()
     
     trainer = Engine(update)
 
