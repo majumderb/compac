@@ -87,8 +87,8 @@ class LatentMarginalizedModel(nn.Module):
                 lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
                 lm_labels_flat_shifted = lm_labels_persona[..., 1:].contiguous().view(-1)
 
-                ll_lm = self.criterion_lm(lm_logits_flat_shifted, lm_labels_flat_shifted)  # B x C x T
-                ll_lm = ll_lm.view(lm_labels.size(0), -1).sum(-1)  # B
+                ll_lm = -1 * self.criterion_lm(lm_logits_flat_shifted, lm_labels_flat_shifted)  # B x C x T
+                ll_lm = ll_lm.view(lm_labels.size(0), -1).mean(-1)  # B
 
                 print('log p(x|z)', ll_lm)
 
@@ -100,7 +100,7 @@ class LatentMarginalizedModel(nn.Module):
 
                 # MC
                 ll_mc = -1.0 * self.criterion_mc(mc_logits.view(-1, mc_logits.size(-1)), mc_labels_persona.view(-1))
-                ll_mc = ll_mc.view(mc_labels.size(0), -1).sum(-1)
+                ll_mc = ll_mc.view(mc_labels.size(0), -1).mean(-1)
 
                 log_prob_x_given_z_h_mc = ll_mc + torch.log(z_given_h[:, i])  # B
                 log_probs_mc.append(log_prob_x_given_z_h_mc)
