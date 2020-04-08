@@ -88,13 +88,13 @@ class LatentMarginalizedModel(nn.Module):
                 lm_labels_flat_shifted = lm_labels_persona[..., 1:].contiguous().view(-1)
 
                 ll_lm = -1.0 * self.criterion_lm(lm_logits_flat_shifted, lm_labels_flat_shifted)  # B x C x T
-                ll_lm = ll_lm.view(lm_labels.size(0), -1).mean(-1)  # B
+                ll_lm = ll_lm.view(lm_labels.size(0), -1).sum(-1)  # B
 
-                log_prob_x_given_z_h_lm = ll_lm
+                log_prob_x_z_given_h = ll_lm
                 if self.training_type == TRAINING_TYPE_MARGINALIZE:
-                    log_prob_x_given_z_h_lm += torch.log(z_given_h[:, i])  # B
+                    log_prob_x_z_given_h += torch.log(z_given_h[:, i])  # B
 
-                log_probs_lm.append(log_prob_x_given_z_h_lm)
+                log_probs_lm.append(log_prob_x_z_given_h)
 
                 # MC
                 ll_mc = -1.0 * self.criterion_mc(mc_logits.view(-1, mc_logits.size(-1)), mc_labels_persona.view(-1))
