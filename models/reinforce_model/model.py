@@ -87,6 +87,8 @@ class LatentMarginalizedModel(nn.Module):
                 lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
                 lm_labels_flat_shifted = lm_labels_persona[..., 1:].contiguous().view(-1)
 
+                print(lm_labels_flat_shifted)
+
                 ll_lm = -1 * self.criterion_lm(lm_logits_flat_shifted, lm_labels_flat_shifted)  # B x C x T
                 ll_lm = ll_lm.view(lm_labels.size(0), -1).mean(-1)  # B
 
