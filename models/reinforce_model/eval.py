@@ -118,7 +118,7 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
             history=history
         )
 
-        ppl = math.exp(marginal_lm_loss.item() / num_labels.item())
+        ppl = math.exp(marginal_lm_loss.item() / 5*num_labels.item())
         ppls.append(ppl)
         losses.append(marginal_lm_loss)
 
