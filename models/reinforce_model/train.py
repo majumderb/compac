@@ -228,7 +228,6 @@ def train():
     RunningAverage(output_transform=lambda x: x[0]).attach(trainer, "loss")
     RunningAverage(output_transform=lambda x: x[1]).attach(trainer, "lm_loss")
     RunningAverage(output_transform=lambda x: x[2]).attach(trainer, "mc_loss")
-    RunningAverage(output_transform=lambda x: x[3], alpha=0.01).attach(trainer, "perplexity")
     RunningAverage(output_transform=lambda x: x[4]).attach(trainer, "prior_loss")
     RunningAverage(output_transform=lambda x: x[5]).attach(trainer, "cond_lm_loss")
 
@@ -254,7 +253,7 @@ def train():
 
     if args.local_rank in [-1, 0]:
         pbar = ProgressBar(persist=True)
-        pbar.attach(trainer, metric_names=["loss", "lm_loss", "mc_loss", "perplexity", "prior_loss", "cond_lm_loss"])
+        pbar.attach(trainer, metric_names=["loss", "lm_loss", "mc_loss", "prior_loss", "cond_lm_loss"])
         evaluator.add_event_handler(Events.COMPLETED, lambda _: pbar.log_message("Validation: %s" % pformat(evaluator.state.metrics)))
 
         log_dir = make_logdir(args.model_checkpoint, args.exp_name)

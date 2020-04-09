@@ -92,8 +92,6 @@ class LatentMarginalizedModel(nn.Module):
                 ll_lm = -1 * self.criterion_lm(lm_logits_flat_shifted, lm_labels_flat_shifted)  # B x C x T
                 ll_lm = ll_lm.view(lm_labels.size(0), -1).sum(-1)  # B
 
-                print('log p(x|z)', ll_lm)
-
                 log_prob_x_z_given_h = ll_lm
                 if self.training_type == TRAINING_TYPE_MARGINALIZE:
                     log_prob_x_z_given_h += torch.log(z_given_h[:, i])  # B
@@ -119,7 +117,6 @@ class LatentMarginalizedModel(nn.Module):
                 # LM
                 # log_probs_lm: P=1 values for B=batch_size. pick the first and only value
                 log_probs_lm = log_probs_lm[0] #log_probs_lm:B
-                print('Log loss lm for reinforce', log_probs_lm)
                 log_sum_exp_lm = log_probs_lm # B
                 loss_lm = -1.0 * log_sum_exp_lm.mean()
                 # reward: we want to reward those actions which lead to higher
