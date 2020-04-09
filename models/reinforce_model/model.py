@@ -103,7 +103,7 @@ class LatentMarginalizedModel(nn.Module):
                 ll_mc = ll_mc.view(mc_labels.size(0), -1).sum(-1)
 
                 log_prob_x_given_z_h_mc = ll_mc + torch.log(z_given_h[:, i])  # B
-                log_probs_mc.append(log_prob_x_given_z_h_mc)
+                log_probs_mc.append(log_prob_x_given_z_h_mc / num_labels)
 
             if self.training_type == TRAINING_TYPE_MARGINALIZE:
                 # LM
