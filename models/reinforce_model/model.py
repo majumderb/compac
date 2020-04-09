@@ -140,8 +140,6 @@ class LatentMarginalizedModel(nn.Module):
             log_sum_exp_mc = torch.logsumexp(log_probs_mc, dim=1)  # logsumexp
             loss_mc = -1.0 * log_sum_exp_mc.mean()
 
-            print(reinforce_loss_lm, loss_mc, loss_prior, loss_lm)
-
             return reinforce_loss_lm, loss_mc, loss_prior, loss_lm, num_labels
 
 
