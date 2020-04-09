@@ -228,8 +228,8 @@ def train():
     RunningAverage(output_transform=lambda x: x[0]).attach(trainer, "loss")
     RunningAverage(output_transform=lambda x: x[1]).attach(trainer, "lm_loss")
     RunningAverage(output_transform=lambda x: x[2]).attach(trainer, "mc_loss")
-    RunningAverage(output_transform=lambda x: x[4]).attach(trainer, "prior_loss")
-    RunningAverage(output_transform=lambda x: x[5]).attach(trainer, "cond_lm_loss")
+    RunningAverage(output_transform=lambda x: x[3]).attach(trainer, "prior_loss")
+    RunningAverage(output_transform=lambda x: x[4]).attach(trainer, "cond_lm_loss")
 
     metrics = {
         "nll": Loss(torch.nn.CrossEntropyLoss(ignore_index=-100), output_transform=lambda x: (x[0][0], x[1][0])),
