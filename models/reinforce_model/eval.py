@@ -124,7 +124,6 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
 
 print("Average Loss: {}".format(sum(losses) / len(losses)))
 print("Average PPL: {}".format(sum(ppls) / len(ppls)))
-print(losses)
 
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
