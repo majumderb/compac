@@ -18,7 +18,20 @@ ATTR_TO_SPECIAL_TOKEN = {'bos_token': '<bos>', 'eos_token': '<eos>', 'pad_token'
                          'additional_special_tokens': ['<speaker1>', '<speaker2>']}
 MODEL_INPUTS = ["input_ids", "mc_token_ids", "lm_labels", "mc_labels", "token_type_ids"]
 PADDED_INPUTS = ["input_ids", "lm_labels", "token_type_ids"]
-EFFECTS = ['xAttr', 'xEffect', 'xIntent', 'xNeed', 'xReact', 'xWant']
+EFFECTS = {
+    'oEffect': 1,
+    'oReact': 2,
+    'oWant': 3,
+    'xAttr': 4,
+    'xEffect': 5,
+    'xIntent': 6,
+    'xNeed': 7,
+    'xReact': 8,
+    'xWant': 9,
+    'Persona': 10,
+    'Null': 0,
+    }
+
 PERSONA_MAX_LENGTH = 50
 MAX_NUM_PERSONA = 5
 MAX_NUM_COMET_PERSONA = 300
@@ -98,8 +111,10 @@ class PersonaChatDataset(Dataset):
         
         print('Restricted to {} dialogs'.format(len(personachat_split)))
 
+        effects = []
         for d_i, dialog in tqdm(enumerate(personachat_split), total=len(personachat_split)):
             persona = dialog["personality"].copy()
+            effects += [EFFECTS['Persona']]*len(persona)
             if not args.no_comet_persona:
                 comet_annotations = dialog["coment_annotation"]
                 sent_beams = []
@@ -114,6 +129,7 @@ class PersonaChatDataset(Dataset):
                                 print('Getting data for effect {}'.format(effect_name))
                                 print('Getting {} beams'.format(len(effect['beams'][:args.num_beams])))
                             sent_beams += effect['beams'][:args.num_beams]
+                            effects += [EFFECTS[effect_name]] * args.num_beams
                 if d_i == 0:
                     print('Got {} beams'.format(len(sent_beams)))        
                 persona += sent_beams
@@ -124,8 +140,10 @@ class PersonaChatDataset(Dataset):
                 else:
                     if args.no_comet_persona:
                         persona = persona + [[0]]*(MAX_NUM_PERSONA - len(persona))
+                        effects = effects + [[0]]*(MAX_NUM_PERSONA - len(effects))
                     else:    
                         persona = persona + [[0]]*(MAX_NUM_COMET_PERSONA - len(persona))
+                        effects = effects + [[0]]*(MAX_NUM_COMET_PERSONA - len(effects))
                 for i, utterance in enumerate(dialog["utterances"]):
                     history = utterance["history"][-(2*args.max_history+1):]
                     for persona_sample in persona:
@@ -144,6 +162,8 @@ class PersonaChatDataset(Dataset):
                     if history_folded:
                         self.dataset["history_folded"].append(history)
                     self.dataset["n_candidates"] = num_candidates
+                    self.dataset["effects"] = effects 
+
                     self.length += 1 
                 # persona = [persona[-1]] + persona[:-1]  # permuted personalities
 
@@ -176,23 +196,23 @@ class PersonaChatDataset(Dataset):
                 items.append(item)
             elif name  == 'mc_labels':
                 items.append(self.dataset[name][index*MAX_NUM_PERSONA:(index+1)*MAX_NUM_PERSONA])
-            elif name in ['persona', 'history', 'history_folded']:
+            elif name in ['persona', 'history', 'history_folded', 'effects']:
                 items.append(self.dataset[name][index])
             elif name == 'n_candidates':
                 items.append(self.dataset[name])
         
         if 'history_folded' in self.dataset.keys():
-            input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates = items
-            return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates
+            input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates, effects = items
+            return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates, effects
         else:
-            input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates = items
-            return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates
+            input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates, effects = items
+            return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates, effects
 
 def collate_dialog(batch):
     '''
     Padding and Collating
     '''
-    input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates = zip(*batch)
+    input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates, effects = zip(*batch)
     n_candidates = n_candidates[0]
 
     max_seq_len = 0
@@ -233,8 +253,10 @@ def collate_dialog(batch):
         max_history_len = max(max_history_len, len(b))
     padded_history = torch.LongTensor([b + [0]*(max_history_len - len(b)) for b in history])
 
+    padded_effects = torch.LongTensor(effects)
+
     return padded_input_ids, padded_token_type_ids, padded_lm_labels, \
-        mc_token_ids, mc_labels, padded_persona, padded_history
+        mc_token_ids, mc_labels, padded_persona, padded_history, padded_effects
 
 
 def preprocess_comet_dataset(dataset_path):
