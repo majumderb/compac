@@ -140,7 +140,7 @@ class LatentMarginalizedModel(nn.Module):
                     if self.training: # add entropy term only in train mode
                         entropy = self.prior_model.entropy(z_given_h)
                         # print("***** entropy = ", entropy)
-                        loss_prior += (-self.entropy_regularize_prior_wt*entropy) # high entropy is bad
+                        loss_prior += (-self.entropy_regularize_prior_wt*entropy) # low entropy is bad
 
             # MC
             log_probs_mc = torch.stack(log_probs_mc).T
