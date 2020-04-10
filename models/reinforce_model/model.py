@@ -5,7 +5,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models.reinforce_model.prior_posterior_models import PriorRobertaModel, PriorBoWModel
 from models.reinforce_model.dataset import EFFECTS
-# from prior_posterior_models import PriorModel
 
 TRAINING_TYPE_MARGINALIZE = 'marginalize'
 TRAINING_TYPE_REINFORCE = 'reinforce'
