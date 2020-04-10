@@ -140,10 +140,10 @@ class PersonaChatDataset(Dataset):
                 else:
                     if args.no_comet_persona:
                         persona = persona + [[0]]*(MAX_NUM_PERSONA - len(persona))
-                        effects = effects + [[0]]*(MAX_NUM_PERSONA - len(effects))
+                        effects = effects + [0]*(MAX_NUM_PERSONA - len(effects))
                     else:    
                         persona = persona + [[0]]*(MAX_NUM_COMET_PERSONA - len(persona))
-                        effects = effects + [[0]]*(MAX_NUM_COMET_PERSONA - len(effects))
+                        effects = effects + [0]*(MAX_NUM_COMET_PERSONA - len(effects))
                 for i, utterance in enumerate(dialog["utterances"]):
                     history = utterance["history"][-(2*args.max_history+1):]
                     for persona_sample in persona:
