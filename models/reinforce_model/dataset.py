@@ -116,6 +116,7 @@ class PersonaChatDataset(Dataset):
             persona = dialog["personality"].copy()
             effects += [EFFECTS['Persona']]*len(persona)
             if not args.no_comet_persona:
+                MAX_NUM_PERSONA = MAX_NUM_COMET_PERSONA
                 comet_annotations = dialog["coment_annotation"]
                 sent_beams = []
                 for j_s, sent in enumerate(comet_annotations):
@@ -139,12 +140,8 @@ class PersonaChatDataset(Dataset):
                 if args.no_persona:
                     persona = [[]]
                 else:
-                    if args.no_comet_persona:
-                        persona = persona + [[0]]*(MAX_NUM_PERSONA - len(persona))
-                        effects = effects + [0]*(MAX_NUM_PERSONA - len(effects))
-                    else:    
-                        persona = persona + [[0]]*(MAX_NUM_COMET_PERSONA - len(persona))
-                        effects = effects + [0]*(MAX_NUM_COMET_PERSONA - len(effects))
+                    persona = persona + [[0]]*(MAX_NUM_PERSONA - len(persona))
+                    effects = effects + [0]*(MAX_NUM_PERSONA - len(effects))
                 for i, utterance in enumerate(dialog["utterances"]):
                     history = utterance["history"][-(2*args.max_history+1):]
                     for persona_sample in persona:
@@ -193,7 +190,7 @@ class PersonaChatDataset(Dataset):
         multiplier = self.dataset['n_candidates'] * MAX_NUM_PERSONA
         items = []
         for name in self.dataset.keys():
-            if name not in ['n_candidates', 'mc_labels', 'persona', 'history', 'history_folded']:
+            if name not in ['n_candidates', 'mc_labels', 'persona', 'history', 'history_folded', 'effects']:
                 item = [self.dataset[name][index*multiplier:(index+1)*multiplier]]
                 items.append(item)
             elif name  == 'mc_labels':
