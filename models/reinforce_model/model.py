@@ -38,6 +38,7 @@ class LatentMarginalizedModel(nn.Module):
         self.use_baseline = args.use_baseline
         self.moving_avg_ratio = args.moving_avg_ratio
         self.reinforce_loss_coef = args.reinforce_loss_coef
+        self.entropy_regularize_prior_wt = args.entropy_regularize_prior_wt
 
     def forward(
             self,
@@ -134,6 +135,12 @@ class LatentMarginalizedModel(nn.Module):
                 loss_prior = loss_prior.mean() # B
                 # sum the two losses. todo - use a weight on reinforce
                 reinforce_loss_lm = loss_lm + self.reinforce_loss_coef*loss_prior
+
+                if self.entropy_regularize_prior_wt>0.0:
+                    if self.training: # add entropy term only in train mode
+                        entropy = self.prior_model.entropy(z_given_h)
+                        # print("***** entropy = ", entropy)
+                        loss_prior += (-self.entropy_regularize_prior_wt*entropy) # high entropy is bad
 
             # MC
             log_probs_mc = torch.stack(log_probs_mc).T

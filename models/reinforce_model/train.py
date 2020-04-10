@@ -83,6 +83,7 @@ def train():
     parser.add_argument("--no_persona", action='store_true', help="No Persona Evaluation")
     parser.add_argument("--no_comet_persona", action='store_true', help="No Persona Evaluation")
     parser.add_argument("--uniform_prior", action='store_true', help="Uniform prior")
+    parser.add_argument("--entropy_regularize_prior_wt", type=float , default=0.0, help="entropy regularize prior")
     parser.add_argument("--training_type", type=str, default="", help="Marginalize or Reinforce")
     parser.add_argument("--use_baseline", action='store_true', help="Use baseline")
     parser.add_argument("--moving_avg_ratio", type=float, default=0.99, help="Moving avg ratio for running mean baseline")

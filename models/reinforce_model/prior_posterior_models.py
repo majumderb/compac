@@ -5,12 +5,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+
 class PriorBoWModel(nn.Module):
 
     def __init__(self, args):
         super().__init__()
         self.args = args
         self.uniform_prior = args.uniform_prior
+        # self.entropy_regularize_prior = args.entropy_regularize_prior
 
         if not self.uniform_prior:
             self.roberta_embeddings = RobertaForSequenceClassification.from_pretrained('roberta-base').roberta.embeddings
@@ -31,7 +33,7 @@ class PriorBoWModel(nn.Module):
         if self.uniform_prior:
             num_persona = persona.shape[1]
             prob_z_given_H = torch.ones([persona.shape[0], persona.shape[1]]) / num_persona  # B x P
-
+            assert not self.entropy_regularize_prior # Doesn't make sense with uniform prior
             return prob_z_given_H.to(self.args.device)
 
         else:
@@ -48,8 +50,9 @@ class PriorBoWModel(nn.Module):
 
             norms = -1.0 * torch.norm(history_encodings - persona_encodings, 2, dim=-1)
             prob_z_given_H = F.softmax(norms, dim=-1)
+            ret = prob_z_given_H # B x P
 
-            return prob_z_given_H  # B x P
+            return ret
 
     def sample(self, dist_over_z):
         '''
@@ -59,6 +62,17 @@ class PriorBoWModel(nn.Module):
         dist: torch.distributions.Categorical = torch.distributions.Categorical(probs=dist_over_z)
         action_idx = dist.sample()  # B
         return action_idx, dist.log_prob(action_idx)  #B;B
+
+    def entropy(self, dist_over_z):
+        '''
+        :param dist_over_z: B,prior_size
+        :return: entropy
+        '''
+        dist: torch.distributions.Categorical = torch.distributions.Categorical(probs=dist_over_z)
+        entropy = dist.entropy()  # B
+        return entropy.mean() # 1
+        # entropy_regularize_prior
+
 
 class PriorRobertaModel(nn.Module):
 
@@ -109,3 +123,12 @@ class PriorRobertaModel(nn.Module):
         dist: torch.distributions.Categorical = torch.distributions.Categorical(probs=dist_over_z)
         action_idx = dist.sample()  # B
         return action_idx, dist.log_prob(action_idx)  #B;B
+
+    def entropy(self, dist_over_z):
+        '''
+        :param dist_over_z: B,prior_size
+        :return: entropy
+        '''
+        dist: torch.distributions.Categorical = torch.distributions.Categorical(probs=dist_over_z)
+        entropy = dist.entropy()  # B
+        return entropy.mean() # 1
