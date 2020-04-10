@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from models.reinforce_model.prior_posterior_models import PriorRobertaModel, PriorBoWModel
+from models.reinforce_model.dataset import EFFECTS
 # from prior_posterior_models import PriorModel
 
 TRAINING_TYPE_MARGINALIZE = 'marginalize'
@@ -61,7 +62,7 @@ class LatentMarginalizedModel(nn.Module):
         '''
 
         effects = kwargs.get('effects', None)
-        
+
         if not generate:
 
             z_given_h = self.prior_model.get_prob_z_given_H(persona, history)  # B x P
