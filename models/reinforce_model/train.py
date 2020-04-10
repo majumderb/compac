@@ -168,7 +168,7 @@ def train():
         model.train()
 
         batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
-        input_ids, token_type_ids, lm_labels, mc_token_ids, mc_labels, persona, history = batch
+        input_ids, token_type_ids, lm_labels, mc_token_ids, mc_labels, persona, history, effects = batch
         
         (lm_loss), (mc_loss), (loss_prior), (conditional_lm_loss), (num_labels) = model(
             input_ids=input_ids,
@@ -177,7 +177,8 @@ def train():
             lm_labels=lm_labels,
             mc_labels=mc_labels,
             persona=persona,
-            history=history
+            history=history,
+            effects=effects
         )
 
         loss = (lm_loss * args.lm_coef + mc_loss * args.mc_coef) / args.gradient_accumulation_steps
