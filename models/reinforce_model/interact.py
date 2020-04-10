@@ -74,7 +74,8 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
         z = int(persona_choice)
     else:
         prior_z = model.prior_model.get_prob_z_given_H(padded_persona_tensor, history_flat_tensor) # B x P
-        z = torch.argmax(prior_z, dim=1).item()
+        # z = torch.argmax(prior_z, dim=1).item()
+        z, _ = model.prior_model.sample(prior_z)
 
     selected_personality = [personality[z]]
     print('Selected Persona {}'.format(z))
