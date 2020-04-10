@@ -312,5 +312,5 @@ args.dataset_path='/data2/bodhi/data/personachat/weak_label_comet_personachat/pe
 args.no_comet_persona=True
 dataset = PersonaChatDataset(args, tokenizer, split='train')
 batch = dataset._sample(2)
-padded_input_ids, padded_token_type_ids, padded_lm_labels, mc_token_ids, mc_labels, padded_persona, padded_history = collate_dialog(batch)
+padded_input_ids, padded_token_type_ids, padded_lm_labels, mc_token_ids, mc_labels, padded_persona, padded_history, padded_effects = collate_dialog(batch)
 '''
