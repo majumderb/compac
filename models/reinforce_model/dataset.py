@@ -163,7 +163,8 @@ class PersonaChatDataset(Dataset):
                     if history_folded:
                         self.dataset["history_folded"].append(history)
                     self.dataset["n_candidates"] = num_candidates
-                    assert len(persona) == len(effects)
+                    print(persona)
+                    print(effects)
                     self.dataset["effects"] = effects 
 
                     self.length += 1 
