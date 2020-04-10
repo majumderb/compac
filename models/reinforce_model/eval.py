@@ -118,12 +118,12 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
             history=history
         )
 
-        ppl = math.exp(marginal_lm_loss.item())
-        ppls.append(ppl)
         losses.append(marginal_lm_loss)
 
-print("Average Loss: {}".format(sum(losses) / len(losses)))
-print("Average PPL: {}".format(sum(ppls) / len(ppls)))
+average_nll = sum(losses) / len(losses)
+ppl = math.exp(average_nll)
+print("Average Loss: {}".format(average_nll))
+print("Average PPL: {}".format(ppl))
 
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
