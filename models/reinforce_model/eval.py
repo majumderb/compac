@@ -107,7 +107,7 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
         # print(tokenizer.decode(input_ids[0, -1, :].tolist()))
         # if we dont send labels to model, it doesnt return losses
         batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
-        input_ids, token_type_ids, lm_labels, mc_token_ids, mc_labels, persona, history = batch
+        input_ids, token_type_ids, lm_labels, mc_token_ids, mc_labels, persona, history, effects = batch
         
         (_), (_), (_), (marginal_lm_loss), (num_labels) = model(
             input_ids=input_ids,
