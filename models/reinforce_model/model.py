@@ -60,6 +60,8 @@ class LatentMarginalizedModel(nn.Module):
         token_type_ids: B x P x C x T
         '''
 
+        effects = kwargs.get('effects', None)
+        
         if not generate:
 
             z_given_h = self.prior_model.get_prob_z_given_H(persona, history)  # B x P
