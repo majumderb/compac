@@ -65,6 +65,7 @@ args.training_type = 'marginalize' # to make sure we are marginalizing
 
 training_args = torch.load(os.path.join(args.model_checkpoint_dir, 'model_training_args.bin'))
 print('Loaded training args.')
+training_args.entropy_regularize_prior_wt = 0.0
 
 print("Prepare tokenizer, pretrained model and optimizer.")
 tokenizer_class = GPT2Tokenizer # cant use Autotokenizer because checkpoint could be a Path
@@ -106,7 +107,7 @@ losses = []
 for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
     model.eval()
     with torch.no_grad():
-        input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates = item
+        input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates, effects = item
 
         history_text = ''
         for h in history_folded:
@@ -130,7 +131,7 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
 
-python3 -m models.reinforce_model.generate --dataset_path=/data3/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint_dir=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Mar31_06-16-00_deepx_gpt2reinforce0.8_prior_bow_ep20/ --load_checkpoint_from=checkpoint_mymodel_652050.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --no_comet_persona --training_type=marginalize --test_run_num 30
+python3 -m models.reinforce_model.generate --dataset_path=/data3/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint_dir=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Apr09_15-26-28_deepx_gpt2prior_bow_high_lr_NEW/ --load_checkpoint_from=checkpoint_mymodel_130408.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --no_comet_persona --training_type=marginalize --test_run_num 30
 
 w comet
 
