@@ -111,8 +111,8 @@ class PersonaChatDataset(Dataset):
         
         print('Restricted to {} dialogs'.format(len(personachat_split)))
 
-        effects = []
         for d_i, dialog in tqdm(enumerate(personachat_split), total=len(personachat_split)):
+            effects = []
             persona = dialog["personality"].copy()
             effects += [EFFECTS['Persona']]*len(persona)
             if not args.no_comet_persona:
@@ -163,8 +163,7 @@ class PersonaChatDataset(Dataset):
                     if history_folded:
                         self.dataset["history_folded"].append(history)
                     self.dataset["n_candidates"] = num_candidates
-                    print(persona)
-                    print(effects)
+                    assert len(persona) == len(effects)
                     self.dataset["effects"] = effects 
 
                     self.length += 1 
