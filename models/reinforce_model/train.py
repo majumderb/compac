@@ -5,6 +5,7 @@ from pprint import pformat
 from argparse import ArgumentParser
 from collections import defaultdict
 from itertools import chain
+from functools import partial
 from datetime import datetime
 
 import torch
@@ -21,7 +22,7 @@ from transformers import (AdamW, OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer,
 from models.reinforce_model.model import LatentMarginalizedModel
 from models.reinforce_model.utils import get_dataset, make_logdir
 # from models.discrete_choice_model.data import get_data_loaders
-from models.reinforce_model.dataset import PersonaChatDataset, collate_dialog
+from models.reinforce_model.dataset import PersonaChatDataset, collate_dialog, MAX_NUM_PERSONA, MAX_NUM_COMET_PERSONA
 from models.reinforce_model.data import PADDED_INPUTS, ATTR_TO_SPECIAL_TOKEN
 
 def average_distributed_scalar(scalar, args):
@@ -138,11 +139,16 @@ def train():
 
     train_sampler = torch.utils.data.sampler.RandomSampler(train_dataset)
 
+    if args.no_comet_persona:
+        max_num_persona = MAX_NUM_PERSONA
+    else:
+        max_num_persona = MAX_NUM_COMET_PERSONA
+    
     train_loader = DataLoader(
         train_dataset,
         sampler=train_sampler,
         batch_size=args.train_batch_size,
-        collate_fn=collate_dialog,
+        collate_fn=partial(collate_dialog, max_num_persona=max_num_persona),
         pin_memory=True)
     
     if args.do_eval:
@@ -150,7 +156,7 @@ def train():
             val_dataset,
             shuffle=False,
             batch_size=args.valid_batch_size,
-            collate_fn=collate_dialog,
+            collate_fn=partial(collate_dialog, max_num_persona=max_num_persona),
             pin_memory=True)
 
     print('{} - Data loaded. Starting training'.format(datetime.now() - start))

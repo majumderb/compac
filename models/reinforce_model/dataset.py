@@ -96,6 +96,11 @@ class PersonaChatDataset(Dataset):
         self.split = split
         self.length = 0
 
+        if args.no_comet_persona:
+            self.max_num_persona = MAX_NUM_PERSONA
+        else:
+            self.max_num_persona = MAX_NUM_COMET_PERSONA
+
         personachat = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
         print("Build inputs and labels for {}".format(split))
 
@@ -116,7 +121,6 @@ class PersonaChatDataset(Dataset):
             persona = dialog["personality"].copy()
             effects += [EFFECTS['Persona']]*len(persona)
             if not args.no_comet_persona:
-                MAX_NUM_PERSONA = MAX_NUM_COMET_PERSONA
                 comet_annotations = dialog["coment_annotation"]
                 sent_beams = []
                 for j_s, sent in enumerate(comet_annotations):
@@ -140,8 +144,8 @@ class PersonaChatDataset(Dataset):
                 if args.no_persona:
                     persona = [[]]
                 else:
-                    persona = persona + [[0]]*(MAX_NUM_PERSONA - len(persona))
-                    effects = effects + [0]*(MAX_NUM_PERSONA - len(effects))
+                    persona = persona + [[0]]*(self.max_num_persona - len(persona))
+                    effects = effects + [0]*(self.max_num_persona - len(effects))
                 for i, utterance in enumerate(dialog["utterances"]):
                     history = utterance["history"][-(2*args.max_history+1):]
                     for persona_sample in persona:
@@ -187,14 +191,14 @@ class PersonaChatDataset(Dataset):
         n_candidates
         '''
 
-        multiplier = self.dataset['n_candidates'] * MAX_NUM_PERSONA
+        multiplier = self.dataset['n_candidates'] * self.max_num_persona
         items = []
         for name in self.dataset.keys():
             if name not in ['n_candidates', 'mc_labels', 'persona', 'history', 'history_folded', 'effects']:
                 item = [self.dataset[name][index*multiplier:(index+1)*multiplier]]
                 items.append(item)
             elif name  == 'mc_labels':
-                items.append(self.dataset[name][index*MAX_NUM_PERSONA:(index+1)*MAX_NUM_PERSONA])
+                items.append(self.dataset[name][index*self.max_num_persona:(index+1)*self.max_num_persona])
             elif name in ['persona', 'history', 'history_folded', 'effects']:
                 items.append(self.dataset[name][index])
             elif name == 'n_candidates':
@@ -207,7 +211,7 @@ class PersonaChatDataset(Dataset):
             input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates, effects = items
             return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates, effects
 
-def collate_dialog(batch):
+def collate_dialog(batch, max_num_persona=5):
     '''
     Padding and Collating
     '''
