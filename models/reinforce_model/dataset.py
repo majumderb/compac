@@ -226,20 +226,20 @@ def collate_dialog(batch, max_num_persona=5):
     padded_input_ids = torch.LongTensor([
         [c + [0]*(max_seq_len - len(c)) for c in seq[0]]
         for seq in input_ids])
-    padded_input_ids = padded_input_ids.view((-1, MAX_NUM_PERSONA, n_candidates) + padded_input_ids.shape[2:])
+    padded_input_ids = padded_input_ids.view((-1, max_num_persona, n_candidates) + padded_input_ids.shape[2:])
 
     padded_token_type_ids = torch.LongTensor([
         [c + [0]*(max_seq_len - len(c)) for c in seq[0]]
         for seq in token_type_ids])
-    padded_token_type_ids = padded_token_type_ids.view((-1, MAX_NUM_PERSONA, n_candidates) + padded_token_type_ids.shape[2:])
+    padded_token_type_ids = padded_token_type_ids.view((-1, max_num_persona, n_candidates) + padded_token_type_ids.shape[2:])
     
     padded_lm_labels = torch.LongTensor([
         [c + [-100]*(max_seq_len - len(c)) for c in seq[0]]
         for seq in lm_labels])
-    padded_lm_labels = padded_lm_labels.view((-1, MAX_NUM_PERSONA, n_candidates) + padded_lm_labels.shape[2:])
+    padded_lm_labels = padded_lm_labels.view((-1, max_num_persona, n_candidates) + padded_lm_labels.shape[2:])
 
     mc_token_ids = torch.LongTensor(mc_token_ids).squeeze(1)
-    mc_token_ids = mc_token_ids.view((-1, MAX_NUM_PERSONA, n_candidates))
+    mc_token_ids = mc_token_ids.view((-1, max_num_persona, n_candidates))
     mc_labels = torch.LongTensor(mc_labels)
 
     # persona
