@@ -164,7 +164,7 @@ class PersonaChatDataset(Dataset):
                         self.dataset["history_folded"].append(history)
                     self.dataset["n_candidates"] = num_candidates
                     assert len(persona) == len(effects)
-                    self.dataset["effects"] = effects 
+                    self.dataset["effects"].append(effects) 
 
                     self.length += 1 
                 # persona = [persona[-1]] + persona[:-1]  # permuted personalities
