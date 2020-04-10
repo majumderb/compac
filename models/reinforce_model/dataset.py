@@ -131,7 +131,8 @@ class PersonaChatDataset(Dataset):
                             sent_beams += effect['beams'][:args.num_beams]
                             effects += [EFFECTS[effect_name]] * args.num_beams
                 if d_i == 0:
-                    print('Got {} beams'.format(len(sent_beams)))        
+                    print('Got {} beams'.format(len(sent_beams)))
+                    print('Got {} effects'.format(len(effects)))        
                 persona += sent_beams
             
             for perm in range(args.personality_permutations):
