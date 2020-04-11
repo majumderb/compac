@@ -59,6 +59,13 @@ train w comet:
 
 '''
 
+''' Notes:
+Structured Prior:
+--use_structured_prior -> to activate
+--effect_emb_dim <intval>
+'''
+
+
 def train():
     parser = ArgumentParser()
     parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
@@ -94,6 +101,8 @@ def train():
     parser.add_argument("--reinforce_loss_coef", type=float, default=0.99, help="Loss coef for reinforce")
     parser.add_argument("--prior_model", type=str, default="bow", help="Prior model selection")
     parser.add_argument("--log_dir", type=str, default="", required=True, help="Provide a log dir")
+    parser.add_argument("--use_structured_prior", action='store_true', default=False, help="Use effect type as feature")
+    parser.add_argument("--effect_emb_dim", type=int, default=6, help="Embedding type while computing effect feature")
     args = parser.parse_args()
 
     # logging is set to INFO (resp. WARN) for main (resp. auxiliary) process. logger.info => log main process only, logger.warning => log all processes
