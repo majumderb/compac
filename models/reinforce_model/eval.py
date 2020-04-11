@@ -185,7 +185,7 @@ if args.interpret:
 
             utt_count += 1
             
-print('Interpretibility: {}'.format(acc/total_labels))
+    print('Interpretibility: {}'.format(acc/total_labels))
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
 
