@@ -132,7 +132,6 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
                 history=history,
                 interpret=True,
             )
-            print(joint_probs)
             persona_interpreted = torch.argmax(joint_probs, axis=-1).item()
             all_persona_interpreted.append(persona_interpreted)
 

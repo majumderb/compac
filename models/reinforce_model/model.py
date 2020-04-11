@@ -114,7 +114,6 @@ class LatentMarginalizedModel(nn.Module):
                 # LM
                 log_probs_lm = torch.stack(log_probs_lm).T  # B x P
                 if interpret:
-                    print('interpret')
                     return log_probs_lm
                 log_sum_exp_lm = torch.logsumexp(log_probs_lm, dim=1)  # logsumexp,  B
                 loss_lm = -1.0 * log_sum_exp_lm.mean()
