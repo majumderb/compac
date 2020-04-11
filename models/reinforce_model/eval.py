@@ -100,7 +100,8 @@ num_correct = 0.0
 num_examples = 0.0
 ppls = []
 losses = []
-all_persona_interpreted = []
+all_persona_from_joint = []
+all_persona_from_prior = []
 for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
     model.eval()
     with torch.no_grad():
@@ -133,7 +134,11 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
                 interpret=True,
             )
             persona_interpreted = torch.argmax(joint_probs, axis=-1).item()
-            all_persona_interpreted.append(persona_interpreted)
+            all_persona_from_joint.append(persona_interpreted)
+
+            prior_z = model.prior_model.get_prob_z_given_H(persona, history)
+            z = torch.argmax(prior_z, axis=1).item()
+            all_persona_from_prior.append(z)
 
 average_nll = sum(losses) / len(losses)
 ppl = math.exp(average_nll)
@@ -147,7 +152,8 @@ if args.interpret:
     if args.test_run_num > 0:
         dataset = dataset[:args.test_run_num]
 
-    acc = 0
+    acc_joint = 0
+    acc_prior = 0
     total_labels = 0
     utt_count = 0
     for d_i, dialog in tqdm(enumerate(dataset), total=len(dataset)):
@@ -170,8 +176,10 @@ if args.interpret:
                     persona_labels.append(l["idx"])
             
             if persona_labels:
-                if all_persona_interpreted[utt_count] in persona_labels:
-                    acc += 1
+                if all_persona_from_joint[utt_count] in persona_labels:
+                    acc_joint += 1
+                if all_persona_from_prior in persona_labels:
+                    acc_prior += 1
                 total_labels += 1 
 
             # COMET
