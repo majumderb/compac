@@ -26,12 +26,11 @@ class LatentMarginalizedModel(nn.Module):
         self.gpt2_model = generator_class.from_pretrained(args.model_checkpoint)
         self.criterion_lm = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
         self.criterion_mc = torch.nn.CrossEntropyLoss(reduction='none')
-        self.training_type = TRAINING_TYPE_MARGINALIZE
-        # override
+
         if args.training_type == 'reinforce':
             self.training_type = TRAINING_TYPE_REINFORCE
         else:
-            raise Exception('Invalid training type')
+            self.training_type = TRAINING_TYPE_MARGINALIZE # default
 
         print('Model loaded with training type {}'.format(self.training_type))
 
