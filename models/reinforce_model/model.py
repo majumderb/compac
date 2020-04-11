@@ -64,7 +64,7 @@ class LatentMarginalizedModel(nn.Module):
 
         if not generate:
 
-            z_given_h = self.prior_model.get_prob_z_given_H(persona, history)  # B x P
+            z_given_h = self.prior_model.get_prob_z_given_H(persona, history, effects)  # B x P
 
             log_probs_lm = []
             log_probs_mc = []
