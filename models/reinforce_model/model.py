@@ -50,6 +50,7 @@ class LatentMarginalizedModel(nn.Module):
             lm_labels=None,
             mc_labels=None,
             generate=False,
+            interpret=False,
             **kwargs):
         '''
         persona: B x P x T
@@ -59,8 +60,6 @@ class LatentMarginalizedModel(nn.Module):
         mc_labels: B
         token_type_ids: B x P x C x T
         '''
-
-        interpret = kwargs.get('interpret', False)
 
         effects = kwargs.get('effects', None)
 
@@ -114,6 +113,7 @@ class LatentMarginalizedModel(nn.Module):
                 # LM
                 log_probs_lm = torch.stack(log_probs_lm).T  # B x P
                 if interpret:
+                    print('interpret')
                     return log_probs_lm
                 log_sum_exp_lm = torch.logsumexp(log_probs_lm, dim=1)  # logsumexp,  B
                 loss_lm = -1.0 * log_sum_exp_lm.mean()
