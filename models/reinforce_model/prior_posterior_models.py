@@ -59,7 +59,7 @@ class PriorBoWModel(nn.Module):
                 persona_encodings.append(persona_enc)
 
             persona_encodings = torch.stack(persona_encodings, axis=1)
-            feats = norms = -1.0 * torch.norm(history_encodings - persona_encodings, 2, dim=-1)
+            feats = -1.0 * torch.norm(history_encodings - persona_encodings, 2, dim=-1)
 
             if self.use_structured_prior:
                 embs = self.effect_type_emb(effects) # B,P,emsize
