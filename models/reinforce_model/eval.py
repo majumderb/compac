@@ -193,7 +193,8 @@ if args.interpret:
 
             utt_count += 1
             
-    print('Interpretibility: {}'.format(acc/total_labels))
+    print('Interpretibility with joint: {}'.format(acc_joint/total_labels))
+    print('Interpretibility with prior: {}'.format(acc_prior/total_labels))
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
 
