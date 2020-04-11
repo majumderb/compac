@@ -122,7 +122,7 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
         )
         losses.append(marginal_lm_loss)
 
-        if args.interpert:
+        if args.interpret:
             joint_probs = model(
                 input_ids=input_ids,
                 token_type_ids=token_type_ids,
