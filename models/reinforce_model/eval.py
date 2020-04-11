@@ -150,7 +150,9 @@ if args.interpret:
     acc = 0
     total_labels = 0
     utt_count = 0
-    for d_i, dialog in enumerate(dataset):    
+    for d_i, dialog in enumerate(dataset):
+        comet_annotations = dialog["coment_annotation"]
+
         for i, utterance in enumerate(dialog["utterances"]):
             weak_label = dialog["weak_labels"][2*i + 1]
             if not args.no_comet_persona:
@@ -183,6 +185,7 @@ if args.interpret:
 
             utt_count += 1
             
+print('Interpretibility: {}'.format(acc/total_labels))
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
 
