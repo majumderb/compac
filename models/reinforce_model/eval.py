@@ -47,11 +47,10 @@ parser.add_argument("--interpret", action='store_true', help="Interpret")
 args = parser.parse_args()
 
 
-args.distributed = (args.local_rank != -1)
-
-args.training_type = 'marginalize' # to make sure we are marginalizing 
+args.distributed = (args.local_rank != -1) 
 
 training_args = torch.load(os.path.join(args.model_checkpoint_dir, 'model_training_args.bin'))
+training_args.training_type = 'marginalize' # to make sure we are marginalizing
 training_args.entropy_regularize_prior_wt = 0.0
 if not hasattr(training_args, 'use_structured_prior'):
     training_args.use_structured_prior=False
