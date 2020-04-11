@@ -23,10 +23,7 @@ parser.add_argument("--load_checkpoint_from", type=str, default="", help="Path, 
 
 parser.add_argument("--num_candidates", type=int, default=2, help="Number of candidates for training")
 parser.add_argument("--max_history", type=int, default=2, help="Number of previous exchanges to keep in history")
-parser.add_argument("--train_batch_size", type=int, default=4, help="Batch size for training")
-parser.add_argument("--valid_batch_size", type=int, default=4, help="Batch size for validation")
-# parser.add_argument("--gradient_accumulation_steps", type=int, default=8, help="Accumulate gradients on several steps")
-# parser.add_argument("--lr", type=float, default=6.25e-5, help="Learning rate")
+
 parser.add_argument("--lm_coef", type=float, default=1.0, help="LM loss coefficient")
 parser.add_argument("--mc_coef", type=float, default=1.0, help="Multiple-choice loss coefficient")
 parser.add_argument("--max_norm", type=float, default=1.0, help="Clipping gradient norm")
@@ -45,6 +42,8 @@ parser.add_argument("--no_persona", action='store_true', help="No Persona Evalua
 parser.add_argument("--no_comet_persona", action='store_true', help="No Persona Evaluation")
 parser.add_argument("--training_type", type=str, default="", help="Marginalize or Reinforce")
 parser.add_argument("--prior_model", type=str, default="bow", help="Prior model selection")
+
+parser.add_argument("--interpret", action='store_true', help="Interpret")
 args = parser.parse_args()
 
 
@@ -89,7 +88,7 @@ val_dataset = PersonaChatDataset(args, tokenizer, split='valid')
 val_loader = DataLoader(
     val_dataset,
     shuffle=False,
-    batch_size=args.valid_batch_size,
+    batch_size=1,
     collate_fn=collate_dialog,
     pin_memory=True)
 
@@ -99,7 +98,7 @@ num_correct = 0.0
 num_examples = 0.0
 ppls = []
 losses = []
-
+all_persona_interpreted = []
 for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
     model.eval()
     with torch.no_grad():
@@ -130,15 +129,57 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
                 persona=persona,
                 history=history
             )
-            persona_interpreted = torch.argmax(joint_probs, axis=-1)
-            
-
+            persona_interpreted = torch.argmax(joint_probs, axis=-1).item()
+            all_persona_interpreted.append(persona_interpreted)
 
 average_nll = sum(losses) / len(losses)
 ppl = math.exp(average_nll)
 print("Average Loss: {}".format(average_nll))
 print("Average PPL: {}".format(ppl))
 
+# interpretability
+# load dataset
+if args.interpret:
+    dataset = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)['valid']
+    if args.test_run_num > 0:
+        dataset = dataset[:args.test_run_num]
+
+    acc = 0
+    total_labels = 0
+    utt_count = 0
+    for d_i, dialog in enumerate(dataset):    
+        for i, utterance in enumerate(dialog["utterances"]):
+            weak_label = dialog["weak_labels"][2*i + 1]
+            if not args.no_comet_persona:
+                weak_label_comet = dialog["weak_labels_comet"][2*i + 1]
+            # making sure we are getting the weak labels for correct utterance
+            if weak_label["sentence"] != utterance["candidates"][-1] and weak_label_comet["sentence"] != utterance["candidates"][-1]:
+                print('ERROR!')
+                print(weak_label["sentence"])
+                print(utterance["candidates"][-1])
+
+            # collect persona weak labels
+            persona_labels = []
+            if len(weak_label["label_persona"]) > 0:
+                for l in weak_label["label_persona"]:
+                    persona_labels.append(l["idx"])
+            
+            if persona_labels:
+                if all_persona_interpreted[utt_count] in persona_labels:
+                    acc += 1
+                total_labels += 1 
+
+            # COMET
+            # refactor persona for the first time
+            if not args.no_comet_persona:
+                refactored_comet_persona = []
+                if len(weak_label["label_persona"]) > 0:
+                    for match in weak_label_comet["label_persona"]:
+                        comet_for_sent = comet_annotations[match[0]["persona_sent_id"]]['comet']
+                        refactored_comet_persona.append(comet_for_sent[match[0]["comet_key"]]["beams"][match[0]["beam_id"]])
+
+            utt_count += 1
+            
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
 
