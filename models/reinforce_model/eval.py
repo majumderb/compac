@@ -53,6 +53,8 @@ args.training_type = 'marginalize' # to make sure we are marginalizing
 
 training_args = torch.load(os.path.join(args.model_checkpoint_dir, 'model_training_args.bin'))
 training_args.entropy_regularize_prior_wt = 0.0
+if not hasattr(training_args, 'use_structured_prior'):
+    training_args.use_structured_prior=False
 print('Loaded training args.')
 
 print("Prepare tokenizer, pretrained model and optimizer.")
