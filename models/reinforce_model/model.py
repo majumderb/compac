@@ -60,6 +60,8 @@ class LatentMarginalizedModel(nn.Module):
         token_type_ids: B x P x C x T
         '''
 
+        interpret = kwargs.get('interpret', False)
+
         effects = kwargs.get('effects', None)
 
         if not generate:
@@ -111,6 +113,8 @@ class LatentMarginalizedModel(nn.Module):
             if self.training_type == TRAINING_TYPE_MARGINALIZE:
                 # LM
                 log_probs_lm = torch.stack(log_probs_lm).T  # B x P
+                if interpret:
+                    return log_probs_lm
                 log_sum_exp_lm = torch.logsumexp(log_probs_lm, dim=1)  # logsumexp,  B
                 loss_lm = -1.0 * log_sum_exp_lm.mean()
                 loss_prior, reinforce_loss_lm = torch.Tensor([0.0]).to(self.args.device), torch.Tensor([0.0]).to(self.args.device)

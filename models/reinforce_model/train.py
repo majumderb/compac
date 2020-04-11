@@ -50,6 +50,9 @@ TEST run
 Final run
 python3 -m models.reinforce_model.train --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --n_epochs=1 --num_candidates=1 --personality_permutations=1 --train_batch_size=1 --valid_batch_size=1 --no_comet_persona --do_train --training_type=reinforce --use_baseline --moving_avg_ratio=0.99 --reinforce_loss_coef=0.99 --log_dir models/reinforce_model/ --exp_name reinforce_TEST
 
+deep x 
+python3 -m models.reinforce_model.train --dataset_path=/data3/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --n_epochs=10 --num_candidates=1 --personality_permutations=1 --train_batch_size=3 --valid_batch_size=3 --no_comet_persona --do_train --training_type=reinforce --use_baseline --moving_avg_ratio=0.99 --reinforce_loss_coef=0.99 --entropy_regularize_prior_wt=0.1 --lr=1e-4 --log_dir models/reinforce_model/ --exp_name EXP_NAME
+
 ==
 train w comet:
 > python3 train.py --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint=gpt2 --gradient_accumulation_steps=4 --lm_coef=2.0 --max_history=2 --n_epochs=1 --num_candidates=4 --personality_permutations=2 --train_batch_size=1 --valid_batch_size=1 --test_run_num 5 --exp_name test --do_train --do_eval

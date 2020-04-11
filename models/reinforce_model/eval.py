@@ -118,8 +118,21 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
             persona=persona,
             history=history
         )
-
         losses.append(marginal_lm_loss)
+
+        if args.interpert:
+            joint_probs = model(
+                input_ids=input_ids,
+                token_type_ids=token_type_ids,
+                mc_token_ids=mc_token_ids,
+                lm_labels=lm_labels,
+                mc_labels=mc_labels,
+                persona=persona,
+                history=history
+            )
+            persona_interpreted = torch.argmax(joint_probs, axis=-1)
+            
+
 
 average_nll = sum(losses) / len(losses)
 ppl = math.exp(average_nll)
@@ -129,7 +142,7 @@ print("Average PPL: {}".format(ppl))
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
 
-python3 -m models.reinforce_model.eval --dataset_path=/data3/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint_dir=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Apr09_15-26-28_deepx_gpt2prior_bow_high_lr_NEW/ --load_checkpoint_from=checkpoint_mymodel_130408.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --no_comet_persona --training_type=marginalize --test_run_num 30
+python3 -m models.reinforce_model.eval --dataset_path=/data3/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint_dir=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Apr10_05-33-15_deepx_gpt2prior_bow_rl0.8_NEW/ --load_checkpoint_from=checkpoint_mymodel_43470.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --no_comet_persona --training_type=marginalize --test_run_num 30
 
 w comet
 
