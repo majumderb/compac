@@ -178,7 +178,7 @@ if args.interpret:
             if persona_labels:
                 if all_persona_from_joint[utt_count] in persona_labels:
                     acc_joint += 1
-                if all_persona_from_prior in persona_labels:
+                if all_persona_from_prior[utt_count] in persona_labels:
                     acc_prior += 1
                 total_labels += 1 
 
