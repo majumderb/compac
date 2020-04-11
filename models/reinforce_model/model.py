@@ -33,6 +33,8 @@ class LatentMarginalizedModel(nn.Module):
         else:
             raise Exception('Invalid training type')
 
+        print('Model loaded with training type {}'.format(self.training_type))
+
         assert self.training_type in [TRAINING_TYPE_REINFORCE,TRAINING_TYPE_MARGINALIZE]
         self.running_mean = None #-- todo: maybe init as 0?
         self.use_baseline = args.use_baseline
