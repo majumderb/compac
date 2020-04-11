@@ -130,7 +130,8 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
                 lm_labels=lm_labels,
                 mc_labels=mc_labels,
                 persona=persona,
-                history=history
+                history=history,
+                interpret=True,
             )
             persona_interpreted = torch.argmax(joint_probs, axis=-1).item()
             all_persona_interpreted.append(persona_interpreted)
@@ -150,7 +151,7 @@ if args.interpret:
     acc = 0
     total_labels = 0
     utt_count = 0
-    for d_i, dialog in enumerate(dataset):
+    for d_i, dialog in tqdm(enumerate(dataset), total=len(dataset)):
         comet_annotations = dialog["coment_annotation"]
 
         for i, utterance in enumerate(dialog["utterances"]):
