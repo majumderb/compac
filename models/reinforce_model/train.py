@@ -182,7 +182,7 @@ def train():
         batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
         input_ids, token_type_ids, lm_labels, mc_token_ids, mc_labels, persona, history, effects = batch
         
-        (lm_loss), (mc_loss), (loss_prior), (conditional_lm_loss), (num_labels) = model(
+        (lm_loss), (mc_loss), (loss_prior), (conditional_lm_loss), (num_labels), (track_rewards) = model(
             input_ids=input_ids,
             token_type_ids=token_type_ids,
             mc_token_ids=mc_token_ids,
@@ -207,7 +207,7 @@ def train():
             optimizer.step()
             optimizer.zero_grad()
 
-        return loss.item(), lm_loss.item(), mc_loss.item(), loss_prior.item(), conditional_lm_loss.item()
+        return loss.item(), lm_loss.item(), mc_loss.item(), loss_prior.item(), conditional_lm_loss.item(), track_rewards.item()
     
     trainer = Engine(update)
 
@@ -250,6 +250,7 @@ def train():
     RunningAverage(output_transform=lambda x: x[2]).attach(trainer, "mc_loss")
     RunningAverage(output_transform=lambda x: x[3]).attach(trainer, "prior_loss")
     RunningAverage(output_transform=lambda x: x[4]).attach(trainer, "cond_lm_loss")
+    RunningAverage(output_transform=lambda x: x[5]).attach(trainer, "rewards")
 
     metrics = {
         "nll": Loss(torch.nn.CrossEntropyLoss(ignore_index=-100), output_transform=lambda x: (x[0][0], x[1][0])),
@@ -273,7 +274,7 @@ def train():
 
     if args.local_rank in [-1, 0]:
         pbar = ProgressBar(persist=True)
-        pbar.attach(trainer, metric_names=["loss", "lm_loss", "mc_loss", "prior_loss", "cond_lm_loss"])
+        pbar.attach(trainer, metric_names=["loss", "lm_loss", "mc_loss", "prior_loss", "cond_lm_loss", "rewards"])
         evaluator.add_event_handler(Events.COMPLETED, lambda _: pbar.log_message("Validation: %s" % pformat(evaluator.state.metrics)))
 
         log_dir = make_logdir(args.model_checkpoint, args.exp_name)

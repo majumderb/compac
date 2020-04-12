@@ -197,7 +197,7 @@ if args.interpret:
                 if len(weak_label_comet["label_persona"]) > 0:
                     for match in weak_label_comet["label_persona"]:
                         comet_persona_labels.append(match[0]["persona_sent_id"])
-                        comet_idx = EFFECTS[match[0]["comet_key"]]*training_args.num_beams + match[0]["beam_id"]
+                        comet_idx = EFFECTS[match[0]["comet_key"]]*training_args.num_beams*match[0]["persona_sent_id"] + match[0]["beam_id"]
                         comet_persona_labels.append(comet_idx)
                 
                 if comet_persona_labels:

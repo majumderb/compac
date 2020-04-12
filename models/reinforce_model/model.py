@@ -144,6 +144,7 @@ class LatentMarginalizedModel(nn.Module):
                 loss_lm = -1.0 * log_sum_exp_lm.mean()
                 # reward: we want to reward those actions which lead to higher
                 rewards = log_sum_exp_lm.detach() # important to detach -> to not update the conditional model
+                track_rewards = rewards.mean()
                 if self.use_baseline:
                     if not self.running_mean:
                         self.running_mean = rewards.mean().detach() # 1
@@ -170,7 +171,7 @@ class LatentMarginalizedModel(nn.Module):
             # loss_mc = -1.0 * log_sum_exp_mc.mean()
             loss_mc = torch.Tensor([0.0]).to(self.args.device)
 
-            return reinforce_loss_lm, loss_mc, loss_prior, loss_lm, num_labels
+            return reinforce_loss_lm, loss_mc, loss_prior, loss_lm, num_labels, track_rewards
 
 
         if generate:
