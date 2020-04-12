@@ -116,16 +116,17 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
         batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
         input_ids, token_type_ids, lm_labels, mc_token_ids, mc_labels, persona, history, effects = batch
         
-        (_), (_), (_), (marginal_lm_loss), (num_labels) = model(
-            input_ids=input_ids,
-            token_type_ids=token_type_ids,
-            mc_token_ids=mc_token_ids,
-            lm_labels=lm_labels,
-            mc_labels=mc_labels,
-            persona=persona,
-            history=history
-        )
-        losses.append(marginal_lm_loss)
+        if args.perplexity:
+            (_), (_), (_), (marginal_lm_loss), (num_labels) = model(
+                input_ids=input_ids,
+                token_type_ids=token_type_ids,
+                mc_token_ids=mc_token_ids,
+                lm_labels=lm_labels,
+                mc_labels=mc_labels,
+                persona=persona,
+                history=history
+            )
+            losses.append(marginal_lm_loss)
 
         if args.interpret:
             joint_probs = model(
@@ -145,10 +146,11 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
             z = torch.argmax(prior_z, axis=1).item()
             all_persona_from_prior.append(z)
 
-average_nll = sum(losses) / len(losses)
-ppl = math.exp(average_nll)
-print("Average Loss: {}".format(average_nll))
-print("Average PPL: {}".format(ppl))
+if args.perplexity
+    average_nll = sum(losses) / len(losses)
+    ppl = math.exp(average_nll)
+    print("Average Loss: {}".format(average_nll))
+    print("Average PPL: {}".format(ppl))
 
 # interpretability
 # load dataset
