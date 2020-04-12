@@ -98,8 +98,8 @@ class LatentMarginalizedModel(nn.Module):
                     input_ids = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(input_ids, i)])
                     token_type_ids = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(token_type_ids, i)])
                     mc_token_ids = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(mc_token_ids, i)])
-                    lm_labels_persona = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(lm_labels_persona, i)])
-                    mc_labels_persona = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(mc_labels_persona, i)])
+                    lm_labels_persona = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(lm_labels, i)])
+                    mc_labels_persona = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(mc_labels, i)])
 
                 # LM
                 lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
