@@ -85,7 +85,7 @@ model.to(args.device)
 print("Prepare datasets")
 start = datetime.now()
 
-val_dataset = PersonaChatDataset(args, tokenizer, split='valid')
+val_dataset = PersonaChatDataset(training_args, tokenizer, split='valid')
 
 val_loader = DataLoader(
     val_dataset,
@@ -208,7 +208,9 @@ if args.interpret:
 python3 -m models.reinforce_model.eval --dataset_path=/data3/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint_dir=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Apr10_05-33-15_deepx_gpt2prior_bow_rl0.8_NEW/ --load_checkpoint_from=checkpoint_mymodel_43470.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --no_comet_persona --training_type=marginalize --test_run_num 30
 
 w comet
+Apr11_04-02-25_deepx_gpt2prior_bow_rl0.8_comet_NEW
+checkpoint_mymodel_43470.pth
 
-python3 -m models.reinforce_model.eval --dataset_path=/data3/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint_dir=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Apr01_15-15-56_deepx_gpt2reinforce0.8_prior_bow_comet/ --load_checkpoint_from=checkpoint_mymodel_86940.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --training_type=marginalize --test_run_num 30
+
 
 '''
