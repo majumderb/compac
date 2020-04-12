@@ -84,19 +84,28 @@ class LatentMarginalizedModel(nn.Module):
                 z_given_h = z_given_h.detach() # do not update prior through log likelihood since we are not marginalizing. we will instead update it through reinforce
 
             for i in z_iterator:
-                lm_logits, mc_logits, *_ = self.gpt2_model(
-                    input_ids[:, i, ...].contiguous(),
-                    token_type_ids=token_type_ids[:, i, ...].contiguous(),
-                    mc_token_ids=mc_token_ids[:, i, ...].contiguous(),
-                )
+
+                if self.training_type == TRAINING_TYPE_MARGINALIZE:
+                    lm_logits, mc_logits, *_ = self.gpt2_model(
+                        input_ids[:, i, ...].contiguous(),
+                        token_type_ids=token_type_ids[:, i, ...].contiguous(),
+                        mc_token_ids=mc_token_ids[:, i, ...].contiguous(),
+                    )
+                    lm_labels_persona = lm_labels[:, i, ...]
+                    mc_labels_persona = mc_labels[:, i, ...]
+
+                elif self.training_type == TRAINING_TYPE_REINFORCE:
+                    input_ids = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(input_ids, i)])
+                    token_type_ids = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(token_type_ids, i)])
+                    mc_token_ids = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(mc_token_ids, i)])
+                    lm_labels_persona = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(lm_labels_persona, i)])
+                    mc_labels_persona = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(mc_labels_persona, i)])
 
                 # LM
-                lm_labels_persona = lm_labels[:, i, ...]
-                mc_labels_persona = mc_labels[:, i, ...]
                 lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
                 lm_labels_flat_shifted = lm_labels_persona[..., 1:].contiguous().view(-1)
 
-                num_labels = (lm_labels_flat_shifted != -100).sum()
+                num_labels = (lm_labels_persona[:, 0, 0, :] != -100).sum(-1) # B
 
                 ll_lm = -1 * self.criterion_lm(lm_logits_flat_shifted, lm_labels_flat_shifted)  # B x C x T
                 ll_lm = ll_lm.view(lm_labels.size(0), -1).sum(-1)  # B
