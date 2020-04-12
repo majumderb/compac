@@ -85,7 +85,7 @@ model.to(args.device)
 print("Prepare datasets")
 start = datetime.now()
 
-val_dataset = PersonaChatDataset(training_args, tokenizer, split='valid')
+val_dataset = PersonaChatDataset(args, tokenizer, split='valid')
 
 val_loader = DataLoader(
     val_dataset,
