@@ -87,6 +87,7 @@ model.to(args.device)
 print("Prepare datasets")
 start = datetime.now()
 
+training_args.test_run_num = args.test_run_num
 val_dataset = PersonaChatDataset(training_args, tokenizer, split='valid')
 if training_args.no_comet_persona:
     max_num_persona = MAX_NUM_PERSONA
