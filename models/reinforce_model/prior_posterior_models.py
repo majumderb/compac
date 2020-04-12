@@ -60,16 +60,18 @@ class PriorBoWModel(nn.Module):
 
             persona_encodings = torch.stack(persona_encodings, axis=1)
             feats = -1.0 * torch.norm(history_encodings - persona_encodings, 2, dim=-1)
+            # print("feats : ", feats.size())
 
             if self.use_structured_prior:
                 embs = self.effect_type_emb(effects) # B,P,emsize
                 effect_feature = self.effect_type_to_feature(embs) # B,P,1
                 # print("feats : ", feats.size())
                 # print("effect_feature : ", effect_feature.size())
-                feats = torch.cat([feats.unsqueeze(2),effect_feature]) # B,P,num_feats
+                feats = torch.cat([feats.unsqueeze(2),effect_feature],dim=2) # B,P,num_feats
                 feats = torch.sum( feats * self.feature_combiner.unsqueeze(0).unsqueeze(0), dim=2)
 
             prob_z_given_H = F.softmax(feats, dim=-1)
+            # print("prob_z_given_H : ", prob_z_given_H.size())
             ret = prob_z_given_H # B x P
 
             return ret
