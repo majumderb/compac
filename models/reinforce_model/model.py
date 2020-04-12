@@ -101,6 +101,12 @@ class LatentMarginalizedModel(nn.Module):
                     lm_labels_persona = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(lm_labels, i)])
                     mc_labels_persona = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(mc_labels, i)])
 
+                    lm_logits, mc_logits, *_ = self.gpt2_model(
+                        input_ids,
+                        token_type_ids=token_type_ids,
+                        mc_token_ids=mc_token_ids,
+                    )
+
                 # LM
                 lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
                 lm_labels_flat_shifted = lm_labels_persona[..., 1:].contiguous().view(-1)
