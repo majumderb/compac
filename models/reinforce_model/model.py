@@ -100,10 +100,6 @@ class LatentMarginalizedModel(nn.Module):
                     lm_labels_persona = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(lm_labels, i)])
                     mc_labels_persona = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(mc_labels, i)])
 
-                    print('in', input_ids.shape)
-                    print('in', token_type_ids.shape)
-                    print('in', mc_token_ids.shape)
-
                     lm_logits, mc_logits, *_ = self.gpt2_model(
                         input_ids,
                         token_type_ids=token_type_ids,
@@ -159,9 +155,6 @@ class LatentMarginalizedModel(nn.Module):
                     rewards = rewards - self.running_mean.detach() # B
                 
                 # todo - should do some sort of baseline computation for stable reinforce training
-                print('log_prob', logprob_action.shape)
-                print('rewards', rewards.shape)
-
                 loss_prior = - logprob_action * rewards # B
                 loss_prior = loss_prior.mean() # B
                 # sum the two losses. todo - use a weight on reinforce
