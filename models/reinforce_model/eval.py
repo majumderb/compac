@@ -7,7 +7,7 @@ from datetime import datetime
 from torch.utils.data import DataLoader
 from models.reinforce_model.utils import get_dataset, make_logdir
 from models.reinforce_model.data import PADDED_INPUTS, ATTR_TO_SPECIAL_TOKEN
-from models.reinforce_model.dataset import PersonaChatDataset, collate_dialog
+from models.reinforce_model.dataset import PersonaChatDataset, collate_dialog, EFFECTS
 from models.reinforce_model.train import add_special_tokens_
 from models.reinforce_model.model import LatentMarginalizedModel
 
@@ -157,39 +157,46 @@ if args.interpret:
     total_labels = 0
     utt_count = 0
     for d_i, dialog in tqdm(enumerate(dataset), total=len(dataset)):
-        comet_annotations = dialog["coment_annotation"]
-
         for i, utterance in enumerate(dialog["utterances"]):
             weak_label = dialog["weak_labels"][2*i + 1]
-            if not args.no_comet_persona:
+            if not training_args.no_comet_persona:
                 weak_label_comet = dialog["weak_labels_comet"][2*i + 1]
             # making sure we are getting the weak labels for correct utterance
             if weak_label["sentence"] != utterance["candidates"][-1] and weak_label_comet["sentence"] != utterance["candidates"][-1]:
                 print('ERROR!')
                 print(weak_label["sentence"])
                 print(utterance["candidates"][-1])
-
-            # collect persona weak labels
-            persona_labels = []
-            if len(weak_label["label_persona"]) > 0:
-                for l in weak_label["label_persona"]:
-                    persona_labels.append(l["idx"])
             
-            if persona_labels:
-                if all_persona_from_joint[utt_count] in persona_labels:
-                    acc_joint += 1
-                if all_persona_from_prior[utt_count] in persona_labels:
-                    acc_prior += 1
-                total_labels += 1 
+
+            if training_args.no_comet_persona:
+                # collect persona weak labels
+                persona_labels = []
+                if len(weak_label["label_persona"]) > 0:
+                    for l in weak_label["label_persona"]:
+                        persona_labels.append(l["idx"])
+                
+                if persona_labels:
+                    if all_persona_from_joint[utt_count] in persona_labels:
+                        acc_joint += 1
+                    if all_persona_from_prior[utt_count] in persona_labels:
+                        acc_prior += 1
+                    total_labels += 1 
 
             # COMET
-            # refactor persona for the first time
-            if not args.no_comet_persona:
-                refactored_comet_persona = []
-                if len(weak_label["label_persona"]) > 0:
+            elif not training_args.no_comet_persona:
+                comet_persona_labels = []
+                if len(weak_label_comet["label_persona"]) > 0:
                     for match in weak_label_comet["label_persona"]:
-                        comet_for_sent = comet_annotations[match[0]["persona_sent_id"]]['comet']
-                        refactored_comet_persona.append(comet_for_sent[match[0]["comet_key"]]["beams"][match[0]["beam_id"]])
+                        comet_persona_labels.append(match[0]["persona_sent_id"])
+                        comet_idx = EFFECTS[match[0]["comet_key"]]*training_args.num_beams + match[0]["beam_id"]
+                        comet_persona_labels.append(comet_idx)
+                
+                if comet_persona_labels:
+                    if all_persona_from_joint[utt_count] in comet_persona_labels:
+                        acc_joint += 1
+                    if all_persona_from_prior[utt_count] in comet_persona_labels:
+                        acc_prior += 1
+                    total_labels += 1
 
             utt_count += 1
             
