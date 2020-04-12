@@ -76,8 +76,6 @@ class LatentMarginalizedModel(nn.Module):
                 z_iterator = range(input_ids.shape[1])
             elif self.training_type == TRAINING_TYPE_REINFORCE:
                 action, logprob_action = self.prior_model.sample(z_given_h)
-                print('action', action.shape)
-                print('logprob', logprob_action.shape)
 
                 z_iterator = [action] # in case of reinforce, do fwd for only one value of z
                 z_given_h = z_given_h.detach() # do not update prior through log likelihood since we are not marginalizing. we will instead update it through reinforce
