@@ -45,6 +45,7 @@ parser.add_argument("--training_type", type=str, default="", help="Marginalize o
 parser.add_argument("--prior_model", type=str, default="bow", help="Prior model selection")
 
 parser.add_argument("--interpret", action='store_true', help="Interpret")
+parser.add_argument("--perplexity", action='store_true', help="Perplexity")
 args = parser.parse_args()
 
 
@@ -146,7 +147,7 @@ for i, batch in tqdm(enumerate(val_loader), total=len(val_loader)):
             z = torch.argmax(prior_z, axis=1).item()
             all_persona_from_prior.append(z)
 
-if args.perplexity
+if args.perplexity:
     average_nll = sum(losses) / len(losses)
     ppl = math.exp(average_nll)
     print("Average Loss: {}".format(average_nll))
