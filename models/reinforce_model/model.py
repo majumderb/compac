@@ -103,12 +103,12 @@ class LatentMarginalizedModel(nn.Module):
 
                 log_probs_lm.append(log_prob_x_z_given_h / num_labels)
 
-                # MC
-                ll_mc = -1.0 * self.criterion_mc(mc_logits.view(-1, mc_logits.size(-1)), mc_labels_persona.view(-1))
-                ll_mc = ll_mc.view(mc_labels.size(0), -1).sum(-1)
+                # # MC
+                # ll_mc = -1.0 * self.criterion_mc(mc_logits.view(-1, mc_logits.size(-1)), mc_labels_persona.view(-1))
+                # ll_mc = ll_mc.view(mc_labels.size(0), -1).sum(-1)
 
-                log_prob_x_given_z_h_mc = ll_mc + torch.log(z_given_h[:, i])  # B
-                log_probs_mc.append(log_prob_x_given_z_h_mc)
+                # log_prob_x_given_z_h_mc = ll_mc + torch.log(z_given_h[:, i])  # B
+                # log_probs_mc.append(log_prob_x_given_z_h_mc)
 
             if self.training_type == TRAINING_TYPE_MARGINALIZE:
                 # LM
@@ -148,10 +148,11 @@ class LatentMarginalizedModel(nn.Module):
                         # print("***** entropy = ", entropy)
                         loss_prior += (-self.entropy_regularize_prior_wt*entropy) # low entropy is bad
 
-            # MC
-            log_probs_mc = torch.stack(log_probs_mc).T
-            log_sum_exp_mc = torch.logsumexp(log_probs_mc, dim=1)  # logsumexp
-            loss_mc = -1.0 * log_sum_exp_mc.mean()
+            # # MC
+            # log_probs_mc = torch.stack(log_probs_mc).T
+            # log_sum_exp_mc = torch.logsumexp(log_probs_mc, dim=1)  # logsumexp
+            # loss_mc = -1.0 * log_sum_exp_mc.mean()
+            loss_mc = torch.Tensor([0.0]).to(self.args.device)
 
             return reinforce_loss_lm, loss_mc, loss_prior, loss_lm, num_labels
 
