@@ -77,8 +77,6 @@ class LatentMarginalizedModel(nn.Module):
                 z_iterator = range(input_ids.shape[1])
             elif self.training_type == TRAINING_TYPE_REINFORCE:
                 action, logprob_action = self.prior_model.sample(z_given_h)
-                print('action', action.shape)
-                print('prior', logprob_action.shape)
 
                 z_iterator = [action] # in case of reinforce, do fwd for only one value of z
                 z_given_h = z_given_h.detach() # do not update prior through log likelihood since we are not marginalizing. we will instead update it through reinforce
@@ -100,6 +98,10 @@ class LatentMarginalizedModel(nn.Module):
                     mc_token_ids = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(mc_token_ids, i)])
                     lm_labels_persona = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(lm_labels, i)])
                     mc_labels_persona = torch.cat([torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(mc_labels, i)])
+
+                    print('in', input_ids.shape)
+                    print('in', token_type_ids.shape)
+                    print('in', mc_token_ids.shape)
 
                     lm_logits, mc_logits, *_ = self.gpt2_model(
                         input_ids,
