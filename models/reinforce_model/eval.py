@@ -3,11 +3,12 @@ from transformers import (AdamW, OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer,
 from argparse import ArgumentParser
 from tqdm import tqdm
 from datetime import datetime
+from functools import partial
 
 from torch.utils.data import DataLoader
 from models.reinforce_model.utils import get_dataset, make_logdir
 from models.reinforce_model.data import PADDED_INPUTS, ATTR_TO_SPECIAL_TOKEN
-from models.reinforce_model.dataset import PersonaChatDataset, collate_dialog, EFFECTS
+from models.reinforce_model.dataset import PersonaChatDataset, collate_dialog, EFFECTS, MAX_NUM_COMET_PERSONA, MAX_NUM_PERSONA
 from models.reinforce_model.train import add_special_tokens_
 from models.reinforce_model.model import LatentMarginalizedModel
 
@@ -86,12 +87,16 @@ print("Prepare datasets")
 start = datetime.now()
 
 val_dataset = PersonaChatDataset(training_args, tokenizer, split='valid')
+if training_args.no_comet_persona:
+    max_num_persona = MAX_NUM_PERSONA
+else:
+    max_num_persona = MAX_NUM_COMET_PERSONA
 
 val_loader = DataLoader(
     val_dataset,
     shuffle=False,
     batch_size=1,
-    collate_fn=collate_dialog,
+    collate_fn=partial(collate_dialog, max_num_persona=max_num_persona),
     pin_memory=True)
 
 print('{} - Data loaded. Starting training'.format(datetime.now() - start))

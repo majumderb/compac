@@ -67,9 +67,6 @@ class LatentMarginalizedModel(nn.Module):
         if not generate:
 
             z_given_h = self.prior_model.get_prob_z_given_H(persona, history, effects)  # B x P
-            print('prior', z_given_h.shape)
-            print('prior', input_ids.shape)
-
 
             log_probs_lm = []
             log_probs_mc = []
@@ -115,7 +112,6 @@ class LatentMarginalizedModel(nn.Module):
 
             if self.training_type == TRAINING_TYPE_MARGINALIZE:
                 # LM
-                print(len(log_probs_lm))
                 log_probs_lm = torch.stack(log_probs_lm).T  # B x P
                 if interpret:
                     return log_probs_lm
