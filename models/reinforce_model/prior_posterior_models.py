@@ -67,7 +67,7 @@ class PriorBoWModel(nn.Module):
                 # print("feats : ", feats.size())
                 # print("effect_feature : ", effect_feature.size())
                 feats = torch.cat([feats.unsqueeze(2),effect_feature]) # B,P,num_feats
-                feats = torch.sum( feats * self.feature_combiner.unsqueeze(0).unsqueeze(0), dim=2 )
+                feats = torch.sum( feats * self.feature_combiner.unsqueeze(0).unsqueeze(0), dim=2)
 
             prob_z_given_H = F.softmax(feats, dim=-1)
             ret = prob_z_given_H # B x P
