@@ -112,6 +112,7 @@ class LatentMarginalizedModel(nn.Module):
 
             if self.training_type == TRAINING_TYPE_MARGINALIZE:
                 # LM
+                print(len(log_probs_lm))
                 log_probs_lm = torch.stack(log_probs_lm).T  # B x P
                 if interpret:
                     return log_probs_lm
