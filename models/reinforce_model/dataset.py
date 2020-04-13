@@ -34,7 +34,7 @@ EFFECTS = {
 
 PERSONA_MAX_LENGTH = 50
 MAX_NUM_PERSONA = 5
-MAX_NUM_COMET_PERSONA = 300
+MAX_NUM_COMET_PERSONA = 250
 
 def pad_dataset(dataset, padding=0):
     """ Pad the dataset. This could be optimized by defining a Dataset class and padding at the batch level, but this is simpler. """
