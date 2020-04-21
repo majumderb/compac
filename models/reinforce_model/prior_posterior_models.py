@@ -15,6 +15,7 @@ class PriorBoWModel(nn.Module):
         self.uniform_prior = args.uniform_prior
         self.entropy_regularize_prior_wt = args.entropy_regularize_prior_wt
         self.use_structured_prior = args.use_structured_prior
+        self.use_structured_prior_binarypotential = args.use_structured_prior_binarypotential
 
         if not self.uniform_prior:
             self.roberta_embeddings = RobertaForSequenceClassification.from_pretrained('roberta-base').roberta.embeddings
@@ -24,12 +25,17 @@ class PriorBoWModel(nn.Module):
             assert not self.entropy_regularize_prior_wt>0. # Doesn't make sense with uniform prior
             assert not self.use_structured_prior
 
+        if self.use_structured_prior_binarypotential:
+            assert self.use_structured_prior
         if self.use_structured_prior:
             self.emb_dim = args.effect_emb_dim #5
             self.effect_type_emb = nn.Embedding(len(EFFECTS), self.emb_dim)
             self.effect_type_to_feature = nn.Linear(self.emb_dim,1)
-            #
+            if self.use_structured_prior_binarypotential:
+                self.effecthistory_type_to_feature = nn.Linear(self.emb_dim+self.hidden_size, 1)
             self.num_feats = 2
+            if self.use_structured_prior_binarypotential:
+                self.num_feats += 1
             self.feature_combiner = nn.Parameter(torch.rand(self.num_feats).to(self.args.device))
 
     def get_prob_z_given_H(self, persona, history, effects=None):
@@ -67,7 +73,12 @@ class PriorBoWModel(nn.Module):
                 effect_feature = self.effect_type_to_feature(embs) # B,P,1
                 # print("feats : ", feats.size())
                 # print("effect_feature : ", effect_feature.size())
-                feats = torch.cat([feats.unsqueeze(2),effect_feature],dim=2) # B,P,num_feats
+                if self.use_structured_prior_binarypotential:
+                    effecthistory_feature = self.effecthistory_type_to_feature(
+                        torch.cat([embs,history_encodings],dim=2)) # B,P,1
+                    feats = torch.cat([feats.unsqueeze(2), effect_feature,effecthistory_feature], dim=2)  # B,P,num_feats
+                else:
+                    feats = torch.cat([feats.unsqueeze(2), effect_feature], dim=2)  # B,P,num_feats
                 feats = torch.sum( feats * self.feature_combiner.unsqueeze(0).unsqueeze(0), dim=2)
 
             prob_z_given_H = F.softmax(feats, dim=-1)

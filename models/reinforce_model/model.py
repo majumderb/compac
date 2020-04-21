@@ -116,8 +116,10 @@ class LatentMarginalizedModel(nn.Module):
                 log_prob_x_z_given_h = ll_lm
                 if self.training_type == TRAINING_TYPE_MARGINALIZE:
                     log_prob_x_z_given_h += torch.log(z_given_h[:, i])  # B
+                # print("log_prob_x_z_given_h = ", log_prob_x_z_given_h)
+                # print("num_labels = ", num_labels)
 
-                log_probs_lm.append(log_prob_x_z_given_h / num_labels)
+                log_probs_lm.append(log_prob_x_z_given_h / num_labels) # This line is trhowing error
 
                 # # MC
                 # ll_mc = -1.0 * self.criterion_mc(mc_logits.view(-1, mc_logits.size(-1)), mc_labels_persona.view(-1))

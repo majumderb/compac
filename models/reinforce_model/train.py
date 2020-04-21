@@ -102,6 +102,7 @@ def train():
     parser.add_argument("--prior_model", type=str, default="bow", help="Prior model selection")
     parser.add_argument("--log_dir", type=str, default="", required=True, help="Provide a log dir")
     parser.add_argument("--use_structured_prior", action='store_true', default=False, help="Use effect type as feature")
+    parser.add_argument("--use_structured_prior_binarypotential", action='store_true', default=False, help="")
     parser.add_argument("--effect_emb_dim", type=int, default=6, help="Embedding type while computing effect feature")
     args = parser.parse_args()
 
