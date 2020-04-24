@@ -65,6 +65,7 @@ class PriorBoWModel(nn.Module):
             if self.use_structured_prior:
                 embs = self.effect_type_emb(effects) # B,P,emsize
                 effect_feature = self.effect_type_to_feature(embs) # B,P,1
+                # print(torch.exp(effect_feature, dim=-1)) --> sort and analyze
                 # print("feats : ", feats.size())
                 # print("effect_feature : ", effect_feature.size())
                 feats = torch.cat([feats.unsqueeze(2),effect_feature],dim=2) # B,P,num_feats
