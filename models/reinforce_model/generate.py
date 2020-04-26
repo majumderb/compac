@@ -123,6 +123,7 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
             print('H', history_texts)
         
         persona_texts = []
+        print(persona)
         for p in persona[5]:
             print(p)
             persona_texts.append(tokenizer.decode(p[1:], skip_special_tokens=True))
