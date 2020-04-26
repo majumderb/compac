@@ -123,9 +123,7 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
             print('H', history_texts)
         
         persona_texts = []
-        print(persona)
-        for p in persona[5]:
-            print(p)
+        for p in persona[:5]:
             persona_texts.append(tokenizer.decode(p[1:], skip_special_tokens=True))
 
         out_ids = sample_sequence(persona, history_folded, effects, tokenizer, model, args, current_output=None, persona_choice=None)
