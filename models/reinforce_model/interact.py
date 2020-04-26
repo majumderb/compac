@@ -69,7 +69,7 @@ def sample_sequence(personality, history, effects, tokenizer, model, args, curre
     padded_persona_tensor = torch.LongTensor([p + [0]*(max_persona_len - len(p)) for p in preprocess_persona]).unsqueeze(0).to(args.device) 
     # 1 x T
     history_flat_tensor = torch.LongTensor([ROBERTA_START] + list(chain(*history))).unsqueeze(0).to(args.device)
-    padded_effects = torch.LongTensor(effects)
+    padded_effects = torch.LongTensor(effects).to(args.device)
 
     if persona_choice:
         z = int(persona_choice)
