@@ -116,13 +116,14 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
         gen_dict = {}
         input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates, effects = item
 
-        history_text = ''
+        history_texts = []
         for h in history_folded:
-            history_text += '> ' + tokenizer.decode(h, skip_special_tokens=True) + "\n"
+            history_texts.append(tokenizer.decode(h, skip_special_tokens=True))
         
-        persona_text = ''
+        persona_texts = []
         for p in persona[5]:
-            persona_text += '> ' + tokenizer.decode(p[1:], skip_special_tokens=True) + "\n"
+            print(p)
+            persona_texts.append(tokenizer.decode(p[1:], skip_special_tokens=True))
 
         out_ids = sample_sequence(persona, history_folded, effects, tokenizer, model, args, current_output=None, persona_choice=None)
         out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
@@ -130,8 +131,8 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
         ground_truth = [t for t in lm_labels[0][0] if t!= -100]
         ground_truth_text = tokenizer.decode(ground_truth, skip_special_tokens=True)
 
-        gen_dict['persona'] = persona_text
-        gen_dict['history'] = history_text
+        gen_dict['persona'] = persona_texts
+        gen_dict['history'] = history_texts
         gen_dict['generated'] = out_text
         gen_dict['gold'] = ground_truth_text
         # print('Persona: {}'.format(persona_text))
