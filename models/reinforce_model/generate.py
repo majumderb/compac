@@ -128,14 +128,17 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
         if i == 0:
             print('P', persona_texts)
 
-        out_ids = sample_sequence(persona, history_folded, effects, tokenizer, model, args, current_output=None, persona_choice=None)
-        out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
-        
         ground_truth = [t for t in lm_labels[0][0] if t!= -100]
         ground_truth_text = tokenizer.decode(ground_truth, skip_special_tokens=True)
 
+        out_ids, z = sample_sequence(persona, history_folded, effects, tokenizer, model, args, current_output=None, persona_choice=None)
+        out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
+
+        retrieved_persona = tokenizer.decode(persona[z][1:], skip_special_tokens=True)
+
         gen_dict['persona'] = persona_texts
         gen_dict['history'] = history_texts
+        gen_dict['retrieved_persona'] = retrieved_persona
         gen_dict['generated'] = out_text
         gen_dict['gold'] = ground_truth_text
         # print('Persona: {}'.format(persona_text))

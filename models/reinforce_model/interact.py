@@ -80,7 +80,7 @@ def sample_sequence(personality, history, effects, tokenizer, model, args, curre
         z = z.item()
 
     selected_personality = [personality[z]]
-    print('Selected Persona {}'.format(z))
+    # print('Selected Persona {}'.format(z))
 
     for i in range(args.max_length):
         instance = build_input_from_segments(selected_personality, history, current_output, tokenizer, with_eos=False)
@@ -107,7 +107,7 @@ def sample_sequence(personality, history, effects, tokenizer, model, args, curre
             break
         current_output.append(prev.item())
 
-    return current_output
+    return current_output, z
 
 '''
 python3 -m models.discrete_choice_model.interact --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model=gpt2 --model_checkpoint_dir=models/discrete_choice_model/runs/Mar27_02-50-23_deepx_gpt2marginal_uniform_prior_fp16_NC_1 --load_checkpoint_from=checkpoint_mymodel_130408.pth
