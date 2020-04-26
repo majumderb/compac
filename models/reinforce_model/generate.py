@@ -15,6 +15,7 @@ from models.reinforce_model.interact import sample_sequence
 import torch
 import math
 import os
+import pickle
 
 parser = ArgumentParser()
 parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
@@ -55,6 +56,9 @@ parser.add_argument("--seed", type=int, default=0, help="Seed")
 parser.add_argument("--temperature", type=int, default=0.7, help="Sampling softmax temperature")
 parser.add_argument("--top_k", type=int, default=0, help="Filter top-k tokens before sampling (<=0: no filtering)")
 parser.add_argument("--top_p", type=float, default=0.9, help="Nucleus filtering (top-p) before sampling (<=0.0: no filtering)")
+
+# save
+parser.add_argument("--save_loc", type=str, required=True, help="Save path")
 
 args = parser.parse_args()
 
@@ -104,9 +108,12 @@ num_examples = 0.0
 ppls = []
 losses = []
 
+all_generations = []
+
 for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
     model.eval()
     with torch.no_grad():
+        gen_dict = {}
         input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates, effects = item
 
         history_text = ''
@@ -123,10 +130,20 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
         ground_truth = [t for t in lm_labels[0][0] if t!= -100]
         ground_truth_text = tokenizer.decode(ground_truth, skip_special_tokens=True)
 
-        print('Persona: {}'.format(persona_text))
-        print('History: {}'.format(history_text))
-        print('Generated: {}'.format(out_text))
-        print('Original: {}'.format(ground_truth_text))
+        gen_dict['persona'] = persona_text
+        gen_dict['history'] = history_text
+        gen_dict['generated'] = out_text
+        gen_dict['gold'] = ground_truth_text
+        # print('Persona: {}'.format(persona_text))
+        # print('History: {}'.format(history_text))
+        # print('Generated: {}'.format(out_text))
+        # print('Original: {}'.format(ground_truth_text))
+
+        all_generations.append(gen_dict)
+
+
+with open(args.save_loc, 'wb') as wf:
+    pickle.dump(all_generations, wf)
 
 '''
 /data2/bodhi/projects/persona-dialog/models/persona_weak_sup/runs/Mar03_01-49-47_deepyeti_gpt2weak_sup_og_persona
