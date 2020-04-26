@@ -119,6 +119,8 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
         history_texts = []
         for h in history_folded:
             history_texts.append(tokenizer.decode(h, skip_special_tokens=True))
+        if i == 0:
+            print('H', history_texts)
         
         persona_texts = []
         for p in persona[5]:
