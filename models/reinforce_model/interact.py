@@ -54,7 +54,7 @@ def top_filtering(logits, top_k=0., top_p=0.9, threshold=-float('Inf'), filter_v
     return logits
 
 
-def sample_sequence(personality, history, tokenizer, model, args, current_output=None, persona_choice=None, add_roberta_start=False):
+def sample_sequence(personality, history, effects, tokenizer, model, args, current_output=None, persona_choice=None, add_roberta_start=False):
     special_tokens_ids = tokenizer.convert_tokens_to_ids(SPECIAL_TOKENS)
     if current_output is None:
         current_output = []
@@ -68,12 +68,13 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
 
     padded_persona_tensor = torch.LongTensor([p + [0]*(max_persona_len - len(p)) for p in preprocess_persona]).unsqueeze(0).to(args.device) 
     # 1 x T
-    history_flat_tensor = torch.tensor([ROBERTA_START] + list(chain(*history))).unsqueeze(0).to(args.device)
+    history_flat_tensor = torch.LongTensor([ROBERTA_START] + list(chain(*history))).unsqueeze(0).to(args.device)
+    padded_effects = torch.LongTensor(effects)
 
     if persona_choice:
         z = int(persona_choice)
     else:
-        prior_z = model.prior_model.get_prob_z_given_H(padded_persona_tensor, history_flat_tensor) # B x P
+        prior_z = model.prior_model.get_prob_z_given_H(padded_persona_tensor, history_flat_tensor, padded_effects) # B x P
         # z = torch.argmax(prior_z, dim=1).item()
         z, _ = model.prior_model.sample(prior_z)
         z = z.item()
