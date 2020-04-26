@@ -117,7 +117,7 @@ for i, item in tqdm(enumerate(val_dataset), total=len(val_dataset)):
         for p in persona:
             persona_text += '> ' + tokenizer.decode(p, skip_special_tokens=True) + "\n"
 
-        out_ids = sample_sequence(persona, history_folded, tokenizer, model, args, current_output=None, persona_choice=None)
+        out_ids = sample_sequence(persona, history_folded, effects, tokenizer, model, args, current_output=None, persona_choice=None)
         out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
         
         ground_truth = [t for t in lm_labels[0][0] if t!= -100]
