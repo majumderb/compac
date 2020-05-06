@@ -12,10 +12,11 @@ class PersonaChat():
             len(self.data['train']), len(self.data['valid'])
         ))
 
-    def get_conversation(self, split='train'):
+    def get_conversation(self, index=None, split='train'):
 
         split = self.data[split]
-        index = random.randint(0, len(split))
+        if not index:
+            index = random.randint(0, len(split))
         sample = split[index]
 
         persona = sample['personality']
