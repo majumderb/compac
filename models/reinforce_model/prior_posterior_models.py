@@ -166,3 +166,75 @@ class PriorRobertaModel(nn.Module):
         dist: torch.distributions.Categorical = torch.distributions.Categorical(probs=dist_over_z)
         entropy = dist.entropy()  # B
         return entropy.mean() # 1
+
+
+
+class InferenceRobertaModel(nn.Module):
+
+    def __init__(self,
+                 args):
+        super().__init__()
+        self.args = args
+        self.uniform_prior = args.uniform_prior
+        if not self.uniform_prior:
+            self.roberta_model = RobertaForSequenceClassification.from_pretrained('roberta-base',
+                                                                                  output_hidden_states=True)
+        self.use_history = False # TODO - add to args
+
+    def get_prob_z_given_H_and_x(self, mc_token_ids, persona, history, effects=None):
+        '''
+        persona: B x P x T
+        H: B x T
+        We take the pooled output from Roberta; which uses same tokenization as GPT2
+        TODO: Add <s> token at the beginning which will act as [CLS] token in BERT
+        '''
+
+        if self.uniform_prior:
+            num_persona = persona.shape[1]
+            prob_z_given_H_and_x = torch.ones([persona.shape[0], persona.shape[1]]) / num_persona  # B x P
+
+            return prob_z_given_H_and_x.to(self.args.device)
+
+        else:
+
+            gt_response = mc_token_ids[:, :, 0]
+
+            if self.use_history:
+                history_encodings = self.roberta_model(history)[1][-1][:, 0, :]  # B x 764
+                history_encodings = history_encodings.unsqueeze(1).repeat(1, persona.shape[1], 1)  # B x P x 764
+
+            gt_response_encodings = self.roberta_model(gt_response)[1][-1][:, 0, :]  # B x 764
+
+            persona_encodings = []
+            for i in range(persona.shape[1]):
+                persona_enc = self.roberta_model(persona[:, i, ...])[1][-1][:, 0, :]  # B x 764
+                persona_encodings.append(persona_enc)
+
+            persona_encodings = torch.stack(persona_encodings, axis=1) # B * #personas * 764
+
+            if self.use_history:
+                raise NotImplementedError
+
+            norms = -1.0 * torch.norm(gt_response_encodings - persona_encodings, 2, dim=-1)
+            prob_z_given_H_and_x = F.softmax(norms, dim=-1)
+
+            return prob_z_given_H_and_x  # B x P
+
+    def sample(self, dist_over_z):
+        '''
+        :param dist_over_z: B,prior_size
+        :return: action, logprob of chosen action
+        '''
+        dist: torch.distributions.Categorical = torch.distributions.Categorical(probs=dist_over_z)
+        action_idx = dist.sample()  # B
+        return action_idx, dist.log_prob(action_idx)  # B;B
+
+    def entropy(self, dist_over_z):
+        '''
+        :param dist_over_z: B,prior_size
+        :return: entropy
+        '''
+        dist: torch.distributions.Categorical = torch.distributions.Categorical(probs=dist_over_z)
+        entropy = dist.entropy()  # B
+        return entropy.mean()  # 1
+
