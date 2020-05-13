@@ -161,4 +161,8 @@ w comet
 
 python3 -m models.reinforce_model.generate --dataset_path=/data3/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint_dir=/data3/bodhi/projects/persona-dialog/models/reinforce_model/runs/Apr01_15-15-56_deepx_gpt2reinforce0.8_prior_bow_comet/ --load_checkpoint_from=checkpoint_mymodel_86940.pth --lm_coef=2.0 --mc_coef=0.0 --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --training_type=marginalize --test_run_num 30
 
+w comet hist prior
+
+python3 -m models.reinforce_model.generate --dataset_path=/data2/bodhi/data/personachat/weak_label_comet_personachat/personachat_self_original_comet_scores_alignlabels.expanded_persona_preprocessed.json --model_checkpoint_dir=/data2/bodhi/projects/persona-dialog/models/reinforce_model/runs/Apr21_00-32-55_deepyeti_gpt2comet_hist_prior/ --load_checkpoint_from=checkpoint_mymodel_391230.pth --max_history=2 --num_candidates=1 --personality_permutations=1 --valid_batch_size=1 --training_type=marginalize --test_run_num 100  --save_loc models/reinforce_model/gens/comet_hist_prior.pickle
+
 '''
