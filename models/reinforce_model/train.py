@@ -65,6 +65,9 @@ Structured Prior:
 --effect_emb_dim <intval>
 '''
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
 
 def train():
     parser = ArgumentParser()
@@ -130,6 +133,7 @@ def train():
     # model.to(args.device)
 
     model = LatentMarginalizedModel(args, generator_class=model_class)
+    print('Num parameters: {}'.format(count_parameters(model)))
     model.to(args.device)
 
     # Add special tokens if they are not already added
