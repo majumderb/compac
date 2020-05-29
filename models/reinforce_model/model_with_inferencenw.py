@@ -56,7 +56,7 @@ class LatentVariableInferenceModel(nn.Module):
             mc_labels=None,
             generate=False,
             interpret=False,
-            kl_weight = 1.0,  #TODO - annealing
+            kl_weight = 1.0,  #TODO - annealing from 0 to 1
             **kwargs):
         '''
         persona: B x P x T
@@ -74,7 +74,7 @@ class LatentVariableInferenceModel(nn.Module):
         if not generate:
 
             z_given_h_and_x = sampler_model.get_prob_z_given_H_and_x(mc_token_ids, persona, history, effects)  # B x P
-            z_given_h = self.prior_model.get_prob_z_given_H_and_x(mc_token_ids, persona, history, effects)  # B x P
+            z_given_h = self.prior_model.get_prob_z_given_H(persona, history, effects)  # B x P
 
             log_probs_lm = []
             log_probs_mc = []
@@ -180,7 +180,9 @@ class LatentVariableInferenceModel(nn.Module):
 
                 if self.entropy_regularize_prior_wt > 0.0:
                     if self.training:  # add entropy term only in train mode
-                        entropy = self.prior_model.entropy(z_given_h)
+                        # TODO: try with the inference network
+                        # entropy = self.prior_model.entropy(z_given_h)
+                        entropy = self.inference_model.entropy(z_given_h_and_x)
                         # print("***** entropy = ", entropy)
                         loss_prior += (-self.entropy_regularize_prior_wt * entropy)  # low entropy is bad
 
@@ -207,6 +209,7 @@ class LatentVariableInferenceModel(nn.Module):
             return lm_logits
 
     def compute_kl_loss(self, posterior, prior):
+        # TODO: can get numerically unstable
         log_posterior = torch.log(posterior) # BS * P
         log_prior = torch.log(prior) # BS * P
         kl_loss = torch.mean( torch.sum(posterior * (log_posterior - log_prior), dim=1 ), dim=0 )
