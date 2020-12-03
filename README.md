@@ -1,5 +1,5 @@
-# Persona Expansion with Common Sense in Dialog
-Personalized Dialog Generation
+# Persona Expansion with Commonsense in Dialog
+Personalized Dialog Generation with Commonsense
 
 # Data
 
