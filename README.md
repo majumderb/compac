@@ -12,7 +12,7 @@ http://parl.ai/downloads/personachat/personachat.tgz
 
 ## COMET-expanded PersonaChat
 
-You can download PersonaChat dataset with added COMET expansions from here[https://drive.google.com/file/d/1tJih0IecAmP3IlP6TYvDjy3kOpIbMUIH/view?usp=sharing]  
+You can download PersonaChat dataset with added COMET expansions from [here](https://drive.google.com/file/d/1tJih0IecAmP3IlP6TYvDjy3kOpIbMUIH/view?usp=sharing).  
 
 # COMeT predictions
 
