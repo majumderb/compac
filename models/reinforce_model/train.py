@@ -19,7 +19,7 @@ from ignite.contrib.handlers.tensorboard_logger import TensorboardLogger, Output
 from transformers import (AdamW, OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer,
                                   GPT2DoubleHeadsModel, GPT2Tokenizer, WEIGHTS_NAME, CONFIG_NAME)
 
-from models.reinforce_model.model import LatentMarginalizedModel
+from models.reinforce_model.model import LatentMarginalizedModel, LatentVariableInferenceModel
 from models.reinforce_model.utils import get_dataset, make_logdir
 # from models.discrete_choice_model.data import get_data_loaders
 from models.reinforce_model.dataset import PersonaChatDataset, collate_dialog, MAX_NUM_PERSONA, MAX_NUM_COMET_PERSONA
@@ -132,7 +132,8 @@ def train():
     # model = model_class.from_pretrained(args.model_checkpoint)
     # model.to(args.device)
 
-    model = LatentMarginalizedModel(args, generator_class=model_class)
+    model = LatentVariableInferenceModel(args, generator_class=model_class)
+    # model = LatentMarginalizedModel(args, generator_class=model_class)
     print('Num parameters: {}'.format(count_parameters(model)))
     model.to(args.device)
 
