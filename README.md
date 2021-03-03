@@ -22,8 +22,7 @@ If you find `compac` useful for your research, please cite our paper:
                Harsh Jhamtani and
                Taylor Berg{-}Kirkpatrick and
                Julian J. McAuley},
-  title     = {Like hiking? You probably enjoy nature: Persona-grounded Dialog with
-               Commonsense Expansions},
+  title     = {Like hiking? You probably enjoy nature: Persona-grounded Dialog with Commonsense Expansions},
   booktitle = {EMNLP},
   year      = {2020},
   url       = {https://doi.org/10.18653/v1/2020.emnlp-main.739},
