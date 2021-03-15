@@ -129,9 +129,6 @@ class LatentVariableInferenceModel(nn.Module):
                 log_prob_x_z_given_h = ll_lm
                 if self.training_type == TRAINING_TYPE_MARGINALIZE:
                     log_prob_x_z_given_h += torch.log(z_given_h[:, i])  # B
-                print("log_prob_x_z_given_h = ", log_prob_x_z_given_h)
-                print("num_labels = ", num_labels)
-                print("log_prob_x_z_given_h/num_labels = ", log_prob_x_z_given_h / num_labels)
 
                 log_probs_lm.append(log_prob_x_z_given_h / num_labels)  # This line is trhowing error
 
