@@ -1,7 +1,9 @@
 # Code for "Like hiking? You probably enjoy nature: Persona-grounded Dialog with Commonsense Expansions"
 
 [Like hiking? You probably enjoy nature: Persona-grounded Dialog with Commonsense Expansions](https://www.aclweb.org/anthology/2020.emnlp-main.739.pdf)
+
 Bodhisattwa Prasad Majumder, Harsh Jhamtani, Taylor Berg-Kirkpatrick, Julian McAuley
+
 Published at EMNLP 2020.
 
 # Data
