@@ -151,7 +151,7 @@ def train():
     print("Prepare datasets")
     start = datetime.now()
 
-    train_dataset = PersonaChatDataset(args, tokenizer, split='valid')
+    train_dataset = PersonaChatDataset(args, tokenizer, split='train')
     if args.do_eval:
         val_dataset = PersonaChatDataset(args, tokenizer, split='valid')
 
