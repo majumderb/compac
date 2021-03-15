@@ -59,12 +59,11 @@ class PriorBoWModel(nn.Module):
             history_encodings = self.history_tranformation(history_encodings) # B x 764
             history_encodings = history_encodings.unsqueeze(1).repeat(1, persona.shape[1], 1)  # B x P x 764
 
-            persona_encodings = []
-            for i in range(persona.shape[1]):
-                persona_enc = self.roberta_embeddings(persona[:, i, ...]).mean(dim=1)  # B x 764
-                persona_encodings.append(persona_enc)
+            batch_size, num_personas, num_tokens = persona.shape
+            persona = persona.reshape(-1, num_tokens)
+            persona_encodings = self.roberta_embeddings(persona).mean(dim=1).reshape(batch_size, num_personas, -1)
 
-            persona_encodings = torch.stack(persona_encodings, axis=1)
+
             feats = -1.0 * torch.norm(history_encodings - persona_encodings, 2, dim=-1)
             # print("feats : ", feats.size())
 
@@ -137,12 +136,9 @@ class PriorRobertaModel(nn.Module):
             history_encodings = self.roberta_model(history)[1][-1][:, 0, :]  # B x 764
             history_encodings = history_encodings.unsqueeze(1).repeat(1, persona.shape[1], 1)  # B x P x 764
 
-            persona_encodings = []
-            for i in range(persona.shape[1]):
-                persona_enc = self.roberta_model(persona[:, i, ...])[1][-1][:, 0, :]  # B x 764
-                persona_encodings.append(persona_enc)
-
-            persona_encodings = torch.stack(persona_encodings, axis=1)
+            batch_size, num_personas, num_tokens = persona.shape
+            persona = persona.reshape(-1, num_tokens)
+            persona_encodings = self.roberta_model(persona)[1][-1][:, 0, :].reshape(batch_size, num_personas, -1)
 
             norms = -1.0 * torch.norm(history_encodings - persona_encodings, 2, dim=-1)
             prob_z_given_H = F.softmax(norms, dim=-1)
@@ -205,13 +201,9 @@ class InferenceRobertaModel(nn.Module):
 
             gt_response_encodings = self.roberta_model(gt_response)[1][-1][:, 0, :]  # B x 764
 
-            persona_encodings = []
-            for i in range(persona.shape[1]):
-                persona_enc = self.roberta_model(persona[:, i, ...])[1][-1][:, 0, :]  # B x 764
-                persona_encodings.append(persona_enc)
-
-            persona_encodings = torch.stack(persona_encodings, axis=1) # B * #personas * 764
-
+            batch_size, num_personas, num_tokens = persona.shape
+            persona = persona.reshape(-1, num_tokens)
+            persona_encodings = self.roberta_model(persona)[1][-1][:, 0, :].reshape(batch_size, num_personas, -1)
             if self.use_history:
                 raise NotImplementedError
 
