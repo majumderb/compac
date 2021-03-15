@@ -6,6 +6,8 @@ Bodhisattwa Prasad Majumder, Harsh Jhamtani, Taylor Berg-Kirkpatrick, Julian McA
 
 Published at EMNLP 2020.
 
+![compac](https://github.com/majumderb/compac/blob/main/image/compac.png?raw=true)
+
 # Data
 
 Huggingface cleaned dataset
