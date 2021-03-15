@@ -81,7 +81,7 @@ num_added_tokens = tokenizer.add_special_tokens(ATTR_TO_SPECIAL_TOKEN)
 print('Tokenizer new length: {}'.format(len(tokenizer.encoder)))
 
 model_class = GPT2LMHeadModel
-model = LatentMarginalizedModel(training_args, generator_class=model_class)
+model = LatentVariableInferenceModel(training_args, generator_class=model_class)
 model.gpt2_model.resize_token_embeddings(new_num_tokens=orig_num_tokens + num_added_tokens)
 
 model_checkpoint_path = os.path.join(args.model_checkpoint_dir, args.load_checkpoint_from)
