@@ -19,7 +19,7 @@ from ignite.contrib.handlers.tensorboard_logger import TensorboardLogger, Output
 from transformers import (AdamW, OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer,
                                   GPT2DoubleHeadsModel, GPT2Tokenizer, WEIGHTS_NAME, CONFIG_NAME)
 
-from models.reinforce_model.model_with_inferencenw import LatentMarginalizedModel, LatentVariableInferenceModel
+from models.reinforce_model.model_with_inferencenw import LatentVariableInferenceModel
 from models.reinforce_model.utils import get_dataset, make_logdir
 # from models.discrete_choice_model.data import get_data_loaders
 from models.reinforce_model.dataset import PersonaChatDataset, collate_dialog, MAX_NUM_PERSONA, MAX_NUM_COMET_PERSONA
@@ -213,7 +213,7 @@ def train():
             optimizer.step()
             optimizer.zero_grad()
 
-        return loss.item(), lm_loss.item(), mc_loss.item(), loss_prior.item(), conditional_lm_loss.item(), track_rewards.item(), kl_loss.item(), elbo_loss_tracking.items()
+        return loss.item(), lm_loss.item(), mc_loss.item(), loss_prior.item(), conditional_lm_loss.item(), track_rewards.item(), kl_loss.item(), elbo_loss_tracking.item()
     
     trainer = Engine(update)
 

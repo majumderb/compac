@@ -3,7 +3,7 @@ from transformers import RobertaForSequenceClassification
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from models.reinforce_model.prior_posterior_models import PriorRobertaModel, PriorBoWModel, InferenceRobertaModel
+from models.reinforce_model.prior_posterior_models import PriorRobertaModel, InferenceRobertaModel
 from models.reinforce_model.dataset import EFFECTS
 
 TRAINING_TYPE_MARGINALIZE = 'marginalize'
@@ -18,7 +18,6 @@ class LatentVariableInferenceModel(nn.Module):
 
         self.args = args
         if args.prior_model == 'bow':
-            self.prior_model = PriorBoWModel(args)
             raise NotImplementedError
         elif args.prior_model == 'roberta':
             self.prior_model = PriorRobertaModel(args)
