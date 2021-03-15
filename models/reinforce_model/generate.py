@@ -9,7 +9,7 @@ from models.reinforce_model.utils import get_dataset, make_logdir
 from models.reinforce_model.data import PADDED_INPUTS, ATTR_TO_SPECIAL_TOKEN
 from models.reinforce_model.dataset import PersonaChatDataset, collate_dialog
 from models.reinforce_model.train import add_special_tokens_
-from models.reinforce_model.model import LatentMarginalizedModel
+from models.reinforce_model.model_with_inferencenw import LatentMarginalizedModel, LatentVariableInferenceModel
 from models.reinforce_model.interact import sample_sequence
 
 import torch

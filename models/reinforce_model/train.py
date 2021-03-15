@@ -19,7 +19,7 @@ from ignite.contrib.handlers.tensorboard_logger import TensorboardLogger, Output
 from transformers import (AdamW, OpenAIGPTDoubleHeadsModel, OpenAIGPTTokenizer,
                                   GPT2DoubleHeadsModel, GPT2Tokenizer, WEIGHTS_NAME, CONFIG_NAME)
 
-from models.reinforce_model.model import LatentMarginalizedModel, LatentVariableInferenceModel
+from models.reinforce_model.model_with_inferencenw import LatentMarginalizedModel, LatentVariableInferenceModel
 from models.reinforce_model.utils import get_dataset, make_logdir
 # from models.discrete_choice_model.data import get_data_loaders
 from models.reinforce_model.dataset import PersonaChatDataset, collate_dialog, MAX_NUM_PERSONA, MAX_NUM_COMET_PERSONA
@@ -188,7 +188,7 @@ def train():
         batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
         input_ids, token_type_ids, lm_labels, mc_token_ids, mc_labels, persona, history, effects = batch
         
-        (lm_loss), (mc_loss), (loss_prior), (conditional_lm_loss), (num_labels), (track_rewards) = model(
+        (lm_loss), (mc_loss), (loss_prior), (conditional_lm_loss), (num_labels), (track_rewards), (kl_loss), (elbo_loss_tracking) = model(
             input_ids=input_ids,
             token_type_ids=token_type_ids,
             mc_token_ids=mc_token_ids,
@@ -213,7 +213,7 @@ def train():
             optimizer.step()
             optimizer.zero_grad()
 
-        return loss.item(), lm_loss.item(), mc_loss.item(), loss_prior.item(), conditional_lm_loss.item(), track_rewards.item()
+        return loss.item(), lm_loss.item(), mc_loss.item(), loss_prior.item(), conditional_lm_loss.item(), track_rewards.item(), kl_loss.item(), elbo_loss_tracking.items()
     
     trainer = Engine(update)
 
@@ -257,6 +257,8 @@ def train():
     RunningAverage(output_transform=lambda x: x[3]).attach(trainer, "prior_loss")
     RunningAverage(output_transform=lambda x: x[4]).attach(trainer, "cond_lm_loss")
     RunningAverage(output_transform=lambda x: x[5]).attach(trainer, "rewards")
+    RunningAverage(output_transform=lambda x: x[6]).attach(trainer, "kl_loss")
+    RunningAverage(output_transform=lambda x: x[7]).attach(trainer, "elbo_loss")
 
     metrics = {
         "nll": Loss(torch.nn.CrossEntropyLoss(ignore_index=-100), output_transform=lambda x: (x[0][0], x[1][0])),
@@ -280,19 +282,13 @@ def train():
 
     if args.local_rank in [-1, 0]:
         pbar = ProgressBar(persist=True)
-        pbar.attach(trainer, metric_names=["loss", "lm_loss", "mc_loss", "prior_loss", "cond_lm_loss", "rewards"])
+        pbar.attach(trainer, metric_names=["loss", "lm_loss", "mc_loss", "prior_loss", "cond_lm_loss", "rewards", "kl_loss", "elbo_loss"])
         evaluator.add_event_handler(Events.COMPLETED, lambda _: pbar.log_message("Validation: %s" % pformat(evaluator.state.metrics)))
 
         log_dir = make_logdir(args.model_checkpoint, args.exp_name)
         log_dir = os.path.join(args.log_dir, log_dir)
 
         print("Logging at log dir: {}".format(log_dir))
-
-        # tb stuff
-        # tb_logger = TensorboardLogger(log_dir)
-        # tb_logger.attach(trainer, log_handler=OutputHandler(tag="training", metric_names=["loss"]), event_name=Events.ITERATION_COMPLETED)
-        # tb_logger.attach(trainer, log_handler=OptimizerParamsHandler(optimizer), event_name=Events.ITERATION_STARTED)
-        # tb_logger.attach(evaluator, log_handler=OutputHandler(tag="validation", metric_names=list(metrics.keys()), another_engine=trainer), event_name=Events.EPOCH_COMPLETED)
 
         # save model checkpoints
         checkpoint_handler = ModelCheckpoint(log_dir, 'checkpoint', save_interval=1, n_saved=None)
