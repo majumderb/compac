@@ -16,8 +16,16 @@ ROBERTA_START = 2
 SPECIAL_TOKENS = ["<bos>", "<eos>", "<speaker1>", "<speaker2>", "<pad>"]
 ATTR_TO_SPECIAL_TOKEN = {'bos_token': '<bos>', 'eos_token': '<eos>', 'pad_token': '<pad>',
                          'additional_special_tokens': ['<speaker1>', '<speaker2>']}
-MODEL_INPUTS = ["input_ids", "mc_token_ids", "lm_labels", "mc_labels", "token_type_ids"]
-PADDED_INPUTS = ["input_ids", "lm_labels", "token_type_ids"]
+MODEL_INPUTS = [
+    "input_ids",
+    "token_type_ids",
+    "mc_token_ids",
+    "lm_labels",
+    "mc_labels",
+    "persona",
+    "history",
+    "effects",
+]
 EFFECTS = {
     'oEffect': 1,
     'oReact': 2,
@@ -36,12 +44,6 @@ PERSONA_MAX_LENGTH = 50
 MAX_NUM_PERSONA = 5
 MAX_NUM_COMET_PERSONA = 250
 
-def pad_dataset(dataset, padding=0):
-    """ Pad the dataset. This could be optimized by defining a Dataset class and padding at the batch level, but this is simpler. """
-    max_l = max(len(x) for x in dataset["input_ids"])
-    for name in PADDED_INPUTS:
-        dataset[name] = [x + [padding if name != "lm_labels" else -100] * (max_l - len(x)) for x in dataset[name]]
-    return dataset
 
 def build_input_from_segments(persona, history, reply, tokenizer, lm_labels=False, with_eos=True):
     """ Build a sequence of input from 3 segments: persona, history and last reply. """
@@ -60,26 +62,6 @@ def build_input_from_segments(persona, history, reply, tokenizer, lm_labels=Fals
         instance["lm_labels"] = ([-100] * sum(len(s) for s in sequence[:-1])) + [-100] + sequence[-1][1:]
     return instance
 
-    # print("Pad inputs and convert to Tensor")
-    # tensor_datasets = {"train": [], "valid": []}
-    # for dataset_name, dataset in datasets.items():
-    #     dataset = pad_dataset(dataset, padding=tokenizer.convert_tokens_to_ids(SPECIAL_TOKENS[-1]))
-    #     for input_name in MODEL_INPUTS:
-    #         tensor = torch.tensor(dataset[input_name])
-    #         if input_name != "mc_labels":
-    #             tensor = tensor.view((-1, datasets[dataset_name]["n_candidates"]) + tensor.shape[1:])
-    #         tensor_datasets[dataset_name].append(tensor)
-
-    # print("Build train and validation dataloaders")
-    # train_dataset, valid_dataset = TensorDataset(*tensor_datasets["train"]), TensorDataset(*tensor_datasets["valid"])
-    # train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset) if args.distributed else None
-    # valid_sampler = torch.utils.data.distributed.DistributedSampler(valid_dataset) if args.distributed else None
-    # train_loader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size, shuffle=(not args.distributed))
-    # valid_loader = DataLoader(valid_dataset, sampler=valid_sampler, batch_size=args.valid_batch_size, shuffle=False)
-
-    # print("Train dataset (Batch, Candidates, Seq length): {}".format(train_dataset.tensors[0].shape))
-    # print("Valid dataset (Batch, Candidates, Seq length): {}".format(valid_dataset.tensors[0].shape))
-    # return train_loader, valid_loader, train_sampler, valid_sampler
 
 class PersonaChatDataset(Dataset):
     def __init__(
@@ -92,7 +74,7 @@ class PersonaChatDataset(Dataset):
             **kwargs,
     ):
         super().__init__()
-
+        [self.pad_id] = tokenizer.convert_tokens_to_ids(["<pad>"])
         self.split = split
         self.length = 0
 
@@ -104,7 +86,7 @@ class PersonaChatDataset(Dataset):
         personachat = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
         print("Build inputs and labels for {}".format(split))
 
-        self.dataset = defaultdict(list)
+        self.dataset = {n: [] for n in MODEL_INPUTS}
         # for dataset_name, dataset in personachat.items():
         personachat_split = personachat[split]
         num_candidates = len(personachat_split[0]["utterances"][0]["candidates"])
@@ -160,9 +142,6 @@ class PersonaChatDataset(Dataset):
 
                     self.dataset["persona"].append([[ROBERTA_START] + p  for p in persona])
                     self.dataset["history"].append([ROBERTA_START] + list(chain(*history)))
-                    history_folded = kwargs.get('history_folded', False)
-                    if history_folded:
-                        self.dataset["history_folded"].append(history)
                     self.dataset["n_candidates"] = num_candidates
                     assert len(persona) == len(effects)
                     self.dataset["effects"].append(effects) 
@@ -192,74 +171,52 @@ class PersonaChatDataset(Dataset):
         '''
 
         multiplier = self.dataset['n_candidates'] * self.max_num_persona
-        items = []
+        sample = {}
         for name in self.dataset.keys():
-            if name not in ['n_candidates', 'mc_labels', 'persona', 'history', 'history_folded', 'effects']:
-                item = [self.dataset[name][index*multiplier:(index+1)*multiplier]]
-                items.append(item)
+            if name in ['mc_token_ids', 'input_ids', 'token_type_ids', 'lm_labels']:
+                sample[name] = self.dataset[name][index*multiplier:(index+1)*multiplier]
             elif name  == 'mc_labels':
-                items.append(self.dataset[name][index*self.max_num_persona:(index+1)*self.max_num_persona])
-            elif name in ['persona', 'history', 'history_folded', 'effects']:
-                items.append(self.dataset[name][index])
+                sample[name] = self.dataset[name][index*self.max_num_persona:(index+1)*self.max_num_persona]
+            elif name in ['persona', 'history', 'effects']:
+                sample[name] = self.dataset[name][index]
             elif name == 'n_candidates':
-                items.append(self.dataset[name])
-        
-        if 'history_folded' in self.dataset.keys():
-            input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates, effects = items
-            return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, history_folded, n_candidates, effects
-        else:
-            input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates, effects = items
-            return input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates, effects
+                sample[name] = self.dataset[name]
+            else:
+                assert False, f"Unexpected dataset element with name '{name}'"
+        return sample
 
-def collate_dialog(batch, max_num_persona=5):
-    '''
-    Padding and Collating
-    '''
-    input_ids, token_type_ids, mc_token_ids, lm_labels, mc_labels, persona, history, n_candidates, effects = zip(*batch)
-    n_candidates = n_candidates[0]
-
-    max_seq_len = 0
-    for b in input_ids:
-        for c in b[0]:
-            max_seq_len = max(max_seq_len, len(c))
-
-    padded_input_ids = torch.LongTensor([
-        [c + [0]*(max_seq_len - len(c)) for c in seq[0]]
-        for seq in input_ids])
-    padded_input_ids = padded_input_ids.view((-1, max_num_persona, n_candidates) + padded_input_ids.shape[2:])
-
-    padded_token_type_ids = torch.LongTensor([
-        [c + [0]*(max_seq_len - len(c)) for c in seq[0]]
-        for seq in token_type_ids])
-    padded_token_type_ids = padded_token_type_ids.view((-1, max_num_persona, n_candidates) + padded_token_type_ids.shape[2:])
-    
-    padded_lm_labels = torch.LongTensor([
-        [c + [-100]*(max_seq_len - len(c)) for c in seq[0]]
-        for seq in lm_labels])
-    padded_lm_labels = padded_lm_labels.view((-1, max_num_persona, n_candidates) + padded_lm_labels.shape[2:])
-
-    mc_token_ids = torch.LongTensor(mc_token_ids).squeeze(1)
-    mc_token_ids = mc_token_ids.view((-1, max_num_persona, n_candidates))
-    mc_labels = torch.LongTensor(mc_labels)
-
-    # persona
-    max_persona_len = 0
-    for b in persona:
-        for p in b:
-            max_persona_len = max(max_persona_len, len(p))
-
-    padded_persona = torch.LongTensor([[p + [0]*(max_persona_len - len(p)) for p in b] for b in persona])
-
-    # history
-    max_history_len = 0
-    for b in history:
-        max_history_len = max(max_history_len, len(b))
-    padded_history = torch.LongTensor([b + [0]*(max_history_len - len(b)) for b in history])
-
-    padded_effects = torch.LongTensor(effects)
-
-    return padded_input_ids, padded_token_type_ids, padded_lm_labels, \
-        mc_token_ids, mc_labels, padded_persona, padded_history, padded_effects
+    def collate_dialog(self, batch, max_num_persona=5):
+        '''
+        Padding and Collating
+        '''
+        max_seq_len = max(len(c) for b in batch for c in b['input_ids'])
+        max_persona_len = max(len(p) for b in batch for p in b['persona'])
+        max_history_len = max(len(b['history']) for b in batch)
+        n_candidates = batch[0]['n_candidates']
+        padded_batch = {}
+        for name in batch[0].keys():
+            if name in ['input_ids', 'token_type_ids']:
+                padded = torch.LongTensor([[c + [self.pad_id]*(max_seq_len - len(c)) for c in sample[name]] for sample in batch])
+                padded_batch[name] = padded.view((-1, max_num_persona, n_candidates) + padded.shape[2:])
+            elif name == 'persona': 
+                padded_batch[name] = torch.LongTensor([[p + [self.pad_id]*(max_persona_len - len(p)) for p in sample['persona']] for sample in batch])
+            elif name == 'history':
+                padded_batch[name] = torch.LongTensor([sample[name] + [self.pad_id]*(max_history_len - len(sample[name])) for sample in batch])
+            elif name == "lm_labels":
+                padded = torch.LongTensor([[c + [-100]*(max_seq_len - len(c)) for c in sample[name]] for sample in batch])
+                padded_batch[name] = padded.view((-1, max_num_persona, n_candidates) + padded.shape[2:])
+            elif name == "mc_token_ids":
+                padded_batch[name] = torch.LongTensor([sample[name] for sample in batch]).view((-1, max_num_persona, n_candidates))
+            elif name in ["mc_labels", "effects"]:
+                padded_batch[name] = torch.LongTensor([sample[name] for sample in batch])
+            elif name == "n_candidates":
+                pass
+            else:
+                assert False, f"Unexpected batch element with key '{name}'"
+        # print("PersonaChatDataset.collate_dialog:")
+        # for k, v in padded_batch.items():
+        #     print(f"{k}.shape:", v.shape)
+        return padded_batch        
 
 
 def preprocess_comet_dataset(dataset_path):

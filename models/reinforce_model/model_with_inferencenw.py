@@ -25,7 +25,7 @@ class LatentVariableInferenceModel(nn.Module):
         else:
             raise Exception('Invalid prior model')
 
-        self.gpt2_model = generator_class.from_pretrained(args.model_checkpoint)
+        self.gpt2_model = generator_class.from_pretrained(args.generation_model)
         self.criterion_lm = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
         self.criterion_mc = torch.nn.CrossEntropyLoss(reduction='none')
 
@@ -65,7 +65,6 @@ class LatentVariableInferenceModel(nn.Module):
         mc_labels: B
         token_type_ids: B x P x C x T
         '''
-
         effects = kwargs.get('effects', None)
 
         sampler_model = self.inference_model
@@ -193,8 +192,8 @@ class LatentVariableInferenceModel(nn.Module):
             # log_sum_exp_mc = torch.logsumexp(log_probs_mc, dim=1)  # logsumexp
             # loss_mc = -1.0 * log_sum_exp_mc.mean()
             loss_mc = torch.Tensor([0.0]).to(self.args.device)
-
-            return total_loss_lm, loss_mc, loss_prior, loss_lm, num_labels, track_rewards, kl_loss, elbo_loss_tracking
+            total_loss_lm += 0 * lm_logits.sum() + 0 * mc_logits.sum()  # Fix unsused parameter failure when DDP is used
+            return lm_logits, mc_logits, total_loss_lm, loss_mc, loss_prior, loss_lm, num_labels, track_rewards, kl_loss, elbo_loss_tracking
 
         if generate:
             lm_logits = self.gpt2_model(
