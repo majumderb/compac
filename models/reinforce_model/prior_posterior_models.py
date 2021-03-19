@@ -63,7 +63,7 @@ class PriorBoWModel(nn.Module):
                 batch_size, num_personas, num_tokens = persona.shape
                 persona = persona.reshape(-1, num_tokens)
                 n = batch_size * num_personas
-                n_splits = 8
+                n_splits = 1
                 if n > 1 and n_splits > 1:
                     split_size = n // n_splits
                     persona_encodings = torch.cat(
@@ -156,7 +156,7 @@ class PriorRobertaModel(nn.Module):
                 batch_size, num_personas, num_tokens = persona.shape
                 persona = persona.reshape(-1, num_tokens)
                 n = batch_size * num_personas
-                n_splits = 8
+                n_splits = 1
                 if n > 1 and n_splits > 1:
                     split_size = n // n_splits
                     persona_encodings = torch.cat(
@@ -239,7 +239,7 @@ class InferenceRobertaModel(nn.Module):
                 batch_size, num_personas, num_tokens = persona.shape
                 persona = persona.reshape(-1, num_tokens)
                 n = batch_size * num_personas
-                n_splits = 8
+                n_splits = 1
                 if n > 1 and n_splits > 1:
                     split_size = n // n_splits
                     persona_encodings = torch.cat(
