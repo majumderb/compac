@@ -187,7 +187,8 @@ def create_evaluator(args, model):
     metrics = {
         "nll": Loss(torch.nn.CrossEntropyLoss(ignore_index=-100), output_transform=lambda x: (x[0][0], x[1][0])),
         # the accuracy is a filler since multiple-choice is not used.
-        "accuracy": Accuracy(output_transform=lambda x: (torch.argmax(x[0][1].view((-1,)), dim=0, keepdim=True), x[1][1][:, 0])),
+        "accuracy": Accuracy(
+            output_transform=lambda x: (torch.argmax(x[0][1].view((-1,)), dim=0, keepdim=True), x[1][1][:, 0])),
         "ppl": Perplexity(output_transform=lambda x: (x[0][0], None)),
     }
 

@@ -40,7 +40,6 @@ EFFECTS = {
     'Null': 0,
     }
 
-PERSONA_MAX_LENGTH = 50
 MAX_NUM_PERSONA = 5
 MAX_NUM_COMET_PERSONA = 250
 
@@ -78,20 +77,15 @@ class PersonaChatDataset(Dataset):
         self.split = split
         self.length = 0
 
-        if args.no_comet_persona:
-            self.max_num_persona = MAX_NUM_PERSONA
-        else:
-            self.max_num_persona = MAX_NUM_COMET_PERSONA
-
         personachat = get_dataset(tokenizer, args.dataset_path, args.dataset_cache)
         print("Build inputs and labels for {}".format(split))
 
         self.dataset = {n: [] for n in MODEL_INPUTS}
         # for dataset_name, dataset in personachat.items():
         personachat_split = personachat[split]
-        num_candidates = len(personachat_split[0]["utterances"][0]["candidates"])
+        self.num_candidates = len(personachat_split[0]["utterances"][0]["candidates"])
         if args.num_candidates > 0: #and split == 'train':
-            num_candidates = min(args.num_candidates, num_candidates)
+            self.num_candidates = min(args.num_candidates, self.num_candidates)
         
         if args.test_run_num > 0:
             personachat_split = personachat_split[:args.test_run_num]
@@ -121,31 +115,31 @@ class PersonaChatDataset(Dataset):
                     print('Got {} beams'.format(len(sent_beams)))
                     print('Got {} effects'.format(len(effects)))        
                 persona += sent_beams
-            
+            assert len(persona) == len(effects)
             for perm in range(args.personality_permutations):
                 if args.no_persona:
                     persona = [[]]
-                else:
-                    persona = persona + [[0]]*(self.max_num_persona - len(persona))
-                    effects = effects + [0]*(self.max_num_persona - len(effects))
                 for i, utterance in enumerate(dialog["utterances"]):
                     history = utterance["history"][-(2*args.max_history+1):]
+                    sample = {
+                        "persona": [[ROBERTA_START] + p for p in persona],
+                        "history": [ROBERTA_START] + list(chain(*history)),
+                        "effects": effects,
+                    }
+                    for name in self.dataset.keys():
+                        if name not in sample:
+                            sample[name] = []
                     for persona_sample in persona:
-                        for j, candidate in enumerate(utterance["candidates"][-num_candidates:]):
-                            lm_labels = bool(j == num_candidates-1)
-                            instance = build_input_from_segments([persona_sample], history, candidate, tokenizer, lm_labels)
+                        for j, candidate in enumerate(utterance["candidates"][-self.num_candidates:]):
+                            instance = build_input_from_segments(
+                                [persona_sample], history, candidate, tokenizer, j == self.num_candidates-1)
                             # print('instance: {}'.format(instance))
                             for input_name, input_array in instance.items():
                                 self.dataset[input_name].append(input_array)
                         
-                        self.dataset["mc_labels"].append(num_candidates - 1)
-
-                    self.dataset["persona"].append([[ROBERTA_START] + p  for p in persona])
-                    self.dataset["history"].append([ROBERTA_START] + list(chain(*history)))
-                    self.dataset["n_candidates"] = num_candidates
-                    assert len(persona) == len(effects)
-                    self.dataset["effects"].append(effects) 
-
+                        self.dataset["mc_labels"].append(self.num_candidates - 1)
+                    for name, value in sample.items():
+                        self.dataset[name].append(value)
                     self.length += 1 
                 # persona = [persona[-1]] + persona[:-1]  # permuted personalities
 
@@ -167,22 +161,10 @@ class PersonaChatDataset(Dataset):
         persona
         history
         mc_labels
-        n_candidates
         '''
-
-        multiplier = self.dataset['n_candidates'] * self.max_num_persona
         sample = {}
         for name in self.dataset.keys():
-            if name in ['mc_token_ids', 'input_ids', 'token_type_ids', 'lm_labels']:
-                sample[name] = self.dataset[name][index*multiplier:(index+1)*multiplier]
-            elif name  == 'mc_labels':
-                sample[name] = self.dataset[name][index*self.max_num_persona:(index+1)*self.max_num_persona]
-            elif name in ['persona', 'history', 'effects']:
-                sample[name] = self.dataset[name][index]
-            elif name == 'n_candidates':
-                sample[name] = self.dataset[name]
-            else:
-                assert False, f"Unexpected dataset element with name '{name}'"
+            sample[name] = self.dataset[name][index]
         return sample
 
     def collate_dialog(self, batch, max_num_persona=5):
@@ -192,25 +174,27 @@ class PersonaChatDataset(Dataset):
         max_seq_len = max(len(c) for b in batch for c in b['input_ids'])
         max_persona_len = max(len(p) for b in batch for p in b['persona'])
         max_history_len = max(len(b['history']) for b in batch)
-        n_candidates = batch[0]['n_candidates']
         padded_batch = {}
         for name in batch[0].keys():
             if name in ['input_ids', 'token_type_ids']:
-                padded = torch.LongTensor([[c + [self.pad_id]*(max_seq_len - len(c)) for c in sample[name]] for sample in batch])
-                padded_batch[name] = padded.view((-1, max_num_persona, n_candidates) + padded.shape[2:])
+                padded = torch.LongTensor(
+                    [[c + [self.pad_id]*(max_seq_len - len(c)) for c in sample[name]] for sample in batch])
+                padded_batch[name] = padded.view((-1, max_num_persona, self.num_candidates) + padded.shape[2:])
             elif name == 'persona': 
-                padded_batch[name] = torch.LongTensor([[p + [self.pad_id]*(max_persona_len - len(p)) for p in sample['persona']] for sample in batch])
+                padded_batch[name] = torch.LongTensor(
+                    [[p + [self.pad_id]*(max_persona_len - len(p)) for p in sample['persona']] for sample in batch])
             elif name == 'history':
-                padded_batch[name] = torch.LongTensor([sample[name] + [self.pad_id]*(max_history_len - len(sample[name])) for sample in batch])
+                padded_batch[name] = torch.LongTensor(
+                    [sample[name] + [self.pad_id]*(max_history_len - len(sample[name])) for sample in batch])
             elif name == "lm_labels":
-                padded = torch.LongTensor([[c + [-100]*(max_seq_len - len(c)) for c in sample[name]] for sample in batch])
-                padded_batch[name] = padded.view((-1, max_num_persona, n_candidates) + padded.shape[2:])
+                padded = torch.LongTensor(
+                    [[c + [-100]*(max_seq_len - len(c)) for c in sample[name]] for sample in batch])
+                padded_batch[name] = padded.view((-1, max_num_persona, self.num_candidates) + padded.shape[2:])
             elif name == "mc_token_ids":
-                padded_batch[name] = torch.LongTensor([sample[name] for sample in batch]).view((-1, max_num_persona, n_candidates))
+                padded_batch[name] = torch.LongTensor([sample[name] for sample in batch])\
+                    .view((-1, max_num_persona, self.num_candidates))
             elif name in ["mc_labels", "effects"]:
                 padded_batch[name] = torch.LongTensor([sample[name] for sample in batch])
-            elif name == "n_candidates":
-                pass
             else:
                 assert False, f"Unexpected batch element with key '{name}'"
         # print("PersonaChatDataset.collate_dialog:")
