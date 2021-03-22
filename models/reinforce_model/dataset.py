@@ -50,9 +50,6 @@ def build_input_from_segments(persona, history, reply, tokenizer, lm_labels=Fals
     sequence = [[bos] + list(chain(*persona))] + history + [reply + ([eos] if with_eos else [])]
     sequence = [sequence[0]] + [[speaker2 if (len(sequence)-i) % 2 else speaker1] + s for i, s in enumerate(sequence[1:])]
     instance = {}
-    # print('\nseq', sequence)
-    # print('\npersona', persona)
-    # print('\nhistory', history)
     instance["input_ids"] = list(chain(*sequence))
     instance["token_type_ids"] = [speaker2 if i % 2 else speaker1 for i, s in enumerate(sequence) for _ in s]
     instance["mc_token_ids"] = len(instance["input_ids"]) - 1
@@ -133,11 +130,10 @@ class PersonaChatDataset(Dataset):
                         for j, candidate in enumerate(utterance["candidates"][-self.num_candidates:]):
                             instance = build_input_from_segments(
                                 [persona_sample], history, candidate, tokenizer, j == self.num_candidates-1)
-                            # print('instance: {}'.format(instance))
                             for input_name, input_array in instance.items():
-                                self.dataset[input_name].append(input_array)
+                                sample[input_name].append(input_array)
                         
-                        self.dataset["mc_labels"].append(self.num_candidates - 1)
+                        sample["mc_labels"].append(self.num_candidates - 1)
                     for name, value in sample.items():
                         self.dataset[name].append(value)
                     self.length += 1 
@@ -167,10 +163,13 @@ class PersonaChatDataset(Dataset):
             sample[name] = self.dataset[name][index]
         return sample
 
-    def collate_dialog(self, batch, max_num_persona=5):
+    def collate_dialog(self, batch):
         '''
         Padding and Collating
         '''
+        max_num_persona = max(len(b['persona']) for b in batch)
+        for b_i, b in enumerate(batch):
+            b['persona'] += [[] for _ in range(max_num_persona -len(b['persona']))]
         max_seq_len = max(len(c) for b in batch for c in b['input_ids'])
         max_persona_len = max(len(p) for b in batch for p in b['persona'])
         max_history_len = max(len(b['history']) for b in batch)

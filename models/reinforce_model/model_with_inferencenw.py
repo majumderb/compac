@@ -109,7 +109,6 @@ class LatentVariableInferenceModel(nn.Module):
                         [torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(lm_labels, i)])
                     mc_labels_persona = torch.cat(
                         [torch.index_select(ip, 0, ind).unsqueeze(0) for ip, ind in zip(mc_labels, i)])
-
                     lm_logits, mc_logits, *_ = self.gpt2_model(
                         input_ids,
                         token_type_ids=token_type_ids,
@@ -119,16 +118,13 @@ class LatentVariableInferenceModel(nn.Module):
                 # LM
                 lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
                 lm_labels_flat_shifted = lm_labels_persona[..., 1:].contiguous().view(-1)
-
-                num_labels = (lm_labels_persona[:, 0, 0, :] != -100).sum(-1)  # B
-
+                num_labels = (lm_labels_persona != -100).sum([-3, -2, -1])  # B
                 ll_lm = -1 * self.criterion_lm(lm_logits_flat_shifted, lm_labels_flat_shifted)  # B x C x T
-                ll_lm = ll_lm.view(lm_labels.size(0), -1).sum(-1)  # B
+                ll_lm = ll_lm.view(lm_labels.size(0), -1).sum(1)  # B
 
                 log_prob_x_z_given_h = ll_lm
                 if self.training_type == TRAINING_TYPE_MARGINALIZE:
                     log_prob_x_z_given_h += torch.log(z_given_h[:, i])  # B
-
                 log_probs_lm.append(log_prob_x_z_given_h / num_labels)  # This line is trhowing error
 
                 # # MC

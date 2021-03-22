@@ -55,53 +55,36 @@ class PriorBoWModel(nn.Module):
             return prob_z_given_H.to(self.args.device)
 
         else:
-            try:
-                history_encodings = self.roberta_embeddings(history).mean(dim=1)  # B x 764
-                history_encodings = self.history_tranformation(history_encodings) # B x 764
-                history_encodings = history_encodings.unsqueeze(1).repeat(1, persona.shape[1], 1)  # B x P x 764
+            history_encodings = self.roberta_embeddings(history).mean(dim=1)  # B x 764
+            history_encodings = self.history_tranformation(history_encodings) # B x 764
+            history_encodings = history_encodings.unsqueeze(1).repeat(1, persona.shape[1], 1)  # B x P x 764
 
-                batch_size, num_personas, num_tokens = persona.shape
-                persona = persona.reshape(-1, num_tokens)
-                n = batch_size * num_personas
-                n_splits = 1
-                if n > 1 and n_splits > 1:
-                    split_size = n // n_splits
-                    persona_encodings = torch.cat(
-                        [
-                             self.roberta_embeddings(persona[i*split_size:(i+1)*split_size, :]) 
-                             for i in range(n_splits-1)
-                        ]
-                        + [self.roberta_embeddings(persona[(n_splits-1)*split_size:, :])],
-                        dim=0,
-                    ).mean(dim=1).reshape(batch_size, num_personas, -1)
-                persona_encodings = self.roberta_embeddings(persona).mean(dim=1).reshape(batch_size, num_personas, -1)
+            batch_size, num_personas, num_tokens = persona.shape
+            persona = persona.reshape(-1, num_tokens)
+            persona_encodings = self.roberta_embeddings(persona).mean(dim=1).reshape(batch_size, num_personas, -1)
 
 
-                feats = -1.0 * torch.norm(history_encodings - persona_encodings, 2, dim=-1)
+            feats = -1.0 * torch.norm(history_encodings - persona_encodings, 2, dim=-1)
+            # print("feats : ", feats.size())
+
+            if self.use_structured_prior:
+                embs = self.effect_type_emb(effects) # B,P,emsize
+                effect_feature = self.effect_type_to_feature(embs) # B,P,1
+                # print(torch.exp(effect_feature, dim=-1)) --> sort and analyze
                 # print("feats : ", feats.size())
+                # print("effect_feature : ", effect_feature.size())
+                if self.use_structured_prior_binarypotential:
+                    effecthistory_feature = self.effecthistory_type_to_feature(
+                        torch.cat([embs,history_encodings],dim=2)) # B,P,1
+                    feats = torch.cat([feats.unsqueeze(2), effect_feature,effecthistory_feature], dim=2)  # B,P,num_feats
+                else:
+                    feats = torch.cat([feats.unsqueeze(2), effect_feature], dim=2)  # B,P,num_feats
+                feats = torch.sum( feats * self.feature_combiner.unsqueeze(0).unsqueeze(0), dim=2)
 
-                if self.use_structured_prior:
-                    embs = self.effect_type_emb(effects) # B,P,emsize
-                    effect_feature = self.effect_type_to_feature(embs) # B,P,1
-                    # print(torch.exp(effect_feature, dim=-1)) --> sort and analyze
-                    # print("feats : ", feats.size())
-                    # print("effect_feature : ", effect_feature.size())
-                    if self.use_structured_prior_binarypotential:
-                        effecthistory_feature = self.effecthistory_type_to_feature(
-                            torch.cat([embs,history_encodings],dim=2)) # B,P,1
-                        feats = torch.cat([feats.unsqueeze(2), effect_feature,effecthistory_feature], dim=2)  # B,P,num_feats
-                    else:
-                        feats = torch.cat([feats.unsqueeze(2), effect_feature], dim=2)  # B,P,num_feats
-                    feats = torch.sum( feats * self.feature_combiner.unsqueeze(0).unsqueeze(0), dim=2)
-
-                prob_z_given_H = F.softmax(feats, dim=-1)
-                # print("prob_z_given_H : ", prob_z_given_H.size())
-                ret = prob_z_given_H # B x P
-                return ret
-            except RuntimeError:
-                print("history.shape:", history.shape)
-                print("persona.shape:", persona.shape)
-                raise
+            prob_z_given_H = F.softmax(feats, dim=-1)
+            # print("prob_z_given_H : ", prob_z_given_H.size())
+            ret = prob_z_given_H # B x P
+            return ret
 
     def sample(self, dist_over_z):
         '''
@@ -149,35 +132,18 @@ class PriorRobertaModel(nn.Module):
             return prob_z_given_H.to(self.args.device)
 
         else:
-            try:
-                # print("history.shape, persona.shape:", history.shape, persona.shape)
-                history_encodings = self.roberta_model(history)[1][-1][:, 0, :]  # B x 764
-                history_encodings = history_encodings.unsqueeze(1).repeat(1, persona.shape[1], 1)  # B x P x 764
-                batch_size, num_personas, num_tokens = persona.shape
-                persona = persona.reshape(-1, num_tokens)
-                n = batch_size * num_personas
-                n_splits = 1
-                if n > 1 and n_splits > 1:
-                    split_size = n // n_splits
-                    persona_encodings = torch.cat(
-                        [
-                             self.roberta_model(persona[i*split_size:(i+1)*split_size, :])[1][-1][:, 0, :]
-                             for i in range(n_splits-1)
-                        ]
-                        + [self.roberta_model(persona[(n_splits-1)*split_size:, :])[1][-1][:, 0, :]],
-                        dim=0,
-                    ).reshape(batch_size, num_personas, -1)
-                else:
-                    persona_encodings = self.roberta_model(persona)[1][-1][:, 0, :].reshape(batch_size, num_personas, -1)
+            # print("history.shape, persona.shape:", history.shape, persona.shape)
+            history_encodings = self.roberta_model(history)[1][-1][:, 0, :]  # B x 764
+            history_encodings = history_encodings.unsqueeze(1).repeat(1, persona.shape[1], 1)  # B x P x 764
+            batch_size, num_personas, num_tokens = persona.shape
+            persona = persona.reshape(-1, num_tokens)
+            # print("persona.shape:", persona.shape)
+            persona_encodings = self.roberta_model(persona)[1][-1][:, 0, :].reshape(batch_size, num_personas, -1)
 
-                norms = -1.0 * torch.norm(history_encodings - persona_encodings, 2, dim=-1)
-                prob_z_given_H = F.softmax(norms, dim=-1)
+            norms = -1.0 * torch.norm(history_encodings - persona_encodings, 2, dim=-1)
+            prob_z_given_H = F.softmax(norms, dim=-1)
 
-                return prob_z_given_H  # B x P
-            except RuntimeError:
-                print("history.shape:", history.shape)
-                print("persona.shape:", persona.shape)
-                raise
+            return prob_z_given_H  # B x P
 
     def sample(self, dist_over_z):
         '''
@@ -226,50 +192,31 @@ class InferenceRobertaModel(nn.Module):
             return prob_z_given_H_and_x.to(self.args.device)
 
         else:
-            try:
-                gt_response = mc_token_ids[:, :, 0]
+            gt_response = mc_token_ids[:, :, 0]
 
-                # print("history.shape, persona.shape, gt_response.shape:", history.shape, persona.shape, gt_response.shape)
-                if self.use_history:
-                    history_encodings = self.roberta_model(history)[1][-1][:, 0, :]  # B x 764
-                    history_encodings = history_encodings.unsqueeze(1).repeat(1, persona.shape[1], 1)  # B x P x 764
+            # print("history.shape, persona.shape, gt_response.shape:", history.shape, persona.shape, gt_response.shape)
+            if self.use_history:
+                history_encodings = self.roberta_model(history)[1][-1][:, 0, :]  # B x 764
+                history_encodings = history_encodings.unsqueeze(1).repeat(1, persona.shape[1], 1)  # B x P x 764
 
-                gt_response_encodings = self.roberta_model(gt_response)[1][-1][:, 0, :]  # B x 764
+            gt_response_encodings = self.roberta_model(gt_response)[1][-1][:, 0, :]  # B x 764
 
-                batch_size, num_personas, num_tokens = persona.shape
-                persona = persona.reshape(-1, num_tokens)
-                n = batch_size * num_personas
-                n_splits = 1
-                if n > 1 and n_splits > 1:
-                    split_size = n // n_splits
-                    persona_encodings = torch.cat(
-                        [
-                             self.roberta_model(persona[i*split_size:(i+1)*split_size, :])[1][-1][:, 0, :]
-                             for i in range(n_splits-1)
-                        ]
-                        + [self.roberta_model(persona[(n_splits-1)*split_size:, :])[1][-1][:, 0, :]],
-                        dim=0,
-                    ).reshape(batch_size, num_personas, -1)
-                else:
-                    persona_encodings = self.roberta_model(persona)[1][-1][:, 0, :].reshape(batch_size, num_personas, -1)
-                if self.use_history:
+            batch_size, num_personas, num_tokens = persona.shape
+            persona = persona.reshape(-1, num_tokens)
+            # print("persona.shape:", persona.shape)
+            persona_encodings = self.roberta_model(persona)[1][-1][:, 0, :].reshape(batch_size, num_personas, -1)
+            if self.use_history:
                     raise NotImplementedError
-
-                norms = -1.0 * torch.norm(gt_response_encodings - persona_encodings, 2, dim=-1)
-                prob_z_given_H_and_x = F.softmax(norms, dim=-1)
-                return prob_z_given_H_and_x  # B x P
-            except RuntimeError:
-                print("history.shape:", history.shape)
-                print("gt_response.shpae:", get_response.shape)
-                print("persona.shape:", persona.shape)
-                raise
+            norms = -1.0 * torch.norm(gt_response_encodings - persona_encodings, 2, dim=-1)
+            prob_z_given_H_and_x = F.softmax(norms, dim=-1)
+            return prob_z_given_H_and_x  # B x P
 
     def sample(self, dist_over_z):
         '''
         :param dist_over_z: B,prior_size
         :return: action, logprob of chosen action
         '''
-        dist: torch.distributions.Categorical = torch.distributions.Categorical(probs=dist_over_z)
+        dist: torch.distributions.Categorical = torch.distributions.Categorical(logits=dist_over_z)
         action_idx = dist.sample()  # B
         return action_idx, dist.log_prob(action_idx)  # B;B
 

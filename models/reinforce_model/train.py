@@ -178,7 +178,6 @@ def create_evaluator(args, model):
                 history=batch["history"],
                 effects=batch["effects"],
             )
-            # print("(inference)mc_logits.shape, mc_labels.shape:", mc_logits.shape, batch["mc_labels"].shape)
             lm_logits_flat_shifted = lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
             lm_labels_flat_shifted = batch["lm_labels"][:, 0, :, 1:].contiguous().view(-1)
             return (lm_logits_flat_shifted, mc_logits), (lm_labels_flat_shifted, batch["mc_labels"])
@@ -188,7 +187,8 @@ def create_evaluator(args, model):
         "nll": Loss(torch.nn.CrossEntropyLoss(ignore_index=-100), output_transform=lambda x: (x[0][0], x[1][0])),
         # the accuracy is a filler since multiple-choice is not used.
         "accuracy": Accuracy(
-            output_transform=lambda x: (torch.argmax(x[0][1].view((-1,)), dim=0, keepdim=True), x[1][1][:, 0])),
+            #output_transform=lambda x: (torch.argmax(x[0][1].view((-1,)), dim=0, keepdim=True), x[1][1][:, 0])),
+            output_transform=lambda x: (torch.argmax(x[0][1].squeeze(1), dim=-1), x[1][1][:, 0])),
         "ppl": Perplexity(output_transform=lambda x: (x[0][0], None)),
     }
 
@@ -292,7 +292,7 @@ def init_distributed(args):
     torch.distributed.init_process_group(backend='nccl', init_method='env://')
 
 
-def create_val_dataloader(args, tokenizer, max_num_persona):
+def create_val_dataloader(args, tokenizer):
     val_dataset = PersonaChatDataset(args, tokenizer, split='valid')
     if args.local_rank == -1:
         val_sampler = SequentialSampler(val_dataset)
@@ -302,14 +302,14 @@ def create_val_dataloader(args, tokenizer, max_num_persona):
         val_dataset,
         shuffle=False,
         batch_size=args.valid_batch_size,
-        collate_fn=partial(val_dataset.collate_dialog, max_num_persona=max_num_persona),
+        collate_fn=partial(val_dataset.collate_dialog),
         pin_memory=True,
         sampler=val_sampler,
     )
     return val_loader
 
 
-def create_train_dataloader(args, tokenizer, max_num_persona):
+def create_train_dataloader(args, tokenizer):
     train_dataset = PersonaChatDataset(args, tokenizer, split='train')
     if args.local_rank == -1:
         train_sampler = RandomSampler(train_dataset)
@@ -319,7 +319,7 @@ def create_train_dataloader(args, tokenizer, max_num_persona):
         train_dataset,
         sampler=train_sampler,
         batch_size=args.train_batch_size,
-        collate_fn=partial(train_dataset.collate_dialog, max_num_persona=max_num_persona),
+        collate_fn=partial(train_dataset.collate_dialog),
         pin_memory=True,
         worker_init_fn=seed_worker,
     )
@@ -340,7 +340,6 @@ def train():
 
     print("Prepare datasets")
     start = datetime.now()
-    max_num_persona = MAX_NUM_PERSONA if args.no_comet_persona else MAX_NUM_COMET_PERSONA
 
     log_dir = make_logdir(args.generation_model, args.exp_name)
     log_dir = os.path.join(args.log_dir, log_dir)
@@ -351,12 +350,12 @@ def train():
         tokenizer.save_pretrained(log_dir)
 
     if args.do_eval:
-        val_loader = create_val_dataloader(args, tokenizer, max_num_persona)
+        val_loader = create_val_dataloader(args, tokenizer)
         evaluator = create_evaluator(args, model)
     else:
         val_loader, evaluator = None, None
     if args.do_train:
-        train_loader = create_train_dataloader(args, tokenizer, max_num_persona)
+        train_loader = create_train_dataloader(args, tokenizer)
         trainer, checkpoint_handler = create_trainer_and_checkpoint_handler(args, model, optimizer, train_loader, val_loader, evaluator, log_dir)
     else:
         train_loader, trainer = None, None
