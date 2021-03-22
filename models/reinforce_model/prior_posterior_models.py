@@ -84,7 +84,6 @@ class PriorBoWModel(nn.Module):
             prob_z_given_H = F.softmax(feats, dim=-1)
             # print("prob_z_given_H : ", prob_z_given_H.size())
             ret = prob_z_given_H # B x P
-
             return ret
 
     def sample(self, dist_over_z):
@@ -133,11 +132,12 @@ class PriorRobertaModel(nn.Module):
             return prob_z_given_H.to(self.args.device)
 
         else:
+            # print("history.shape, persona.shape:", history.shape, persona.shape)
             history_encodings = self.roberta_model(history)[1][-1][:, 0, :]  # B x 764
             history_encodings = history_encodings.unsqueeze(1).repeat(1, persona.shape[1], 1)  # B x P x 764
-
             batch_size, num_personas, num_tokens = persona.shape
             persona = persona.reshape(-1, num_tokens)
+            # print("persona.shape:", persona.shape)
             persona_encodings = self.roberta_model(persona)[1][-1][:, 0, :].reshape(batch_size, num_personas, -1)
 
             norms = -1.0 * torch.norm(history_encodings - persona_encodings, 2, dim=-1)
@@ -192,9 +192,9 @@ class InferenceRobertaModel(nn.Module):
             return prob_z_given_H_and_x.to(self.args.device)
 
         else:
-
             gt_response = mc_token_ids[:, :, 0]
 
+            # print("history.shape, persona.shape, gt_response.shape:", history.shape, persona.shape, gt_response.shape)
             if self.use_history:
                 history_encodings = self.roberta_model(history)[1][-1][:, 0, :]  # B x 764
                 history_encodings = history_encodings.unsqueeze(1).repeat(1, persona.shape[1], 1)  # B x P x 764
@@ -203,13 +203,12 @@ class InferenceRobertaModel(nn.Module):
 
             batch_size, num_personas, num_tokens = persona.shape
             persona = persona.reshape(-1, num_tokens)
+            # print("persona.shape:", persona.shape)
             persona_encodings = self.roberta_model(persona)[1][-1][:, 0, :].reshape(batch_size, num_personas, -1)
             if self.use_history:
-                raise NotImplementedError
-
+                    raise NotImplementedError
             norms = -1.0 * torch.norm(gt_response_encodings - persona_encodings, 2, dim=-1)
             prob_z_given_H_and_x = F.softmax(norms, dim=-1)
-
             return prob_z_given_H_and_x  # B x P
 
     def sample(self, dist_over_z):
@@ -217,7 +216,7 @@ class InferenceRobertaModel(nn.Module):
         :param dist_over_z: B,prior_size
         :return: action, logprob of chosen action
         '''
-        dist: torch.distributions.Categorical = torch.distributions.Categorical(probs=dist_over_z)
+        dist: torch.distributions.Categorical = torch.distributions.Categorical(logits=dist_over_z)
         action_idx = dist.sample()  # B
         return action_idx, dist.log_prob(action_idx)  # B;B
 
