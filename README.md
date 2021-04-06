@@ -19,7 +19,11 @@ http://parl.ai/downloads/personachat/personachat.tgz
 
 ## COMET-expanded PersonaChat
 
-You can download PersonaChat dataset with added COMET expansions from [here](https://drive.google.com/file/d/1tJih0IecAmP3IlP6TYvDjy3kOpIbMUIH/view?usp=sharing).  
+You can download PersonaChat dataset with added COMET expansions from [here](https://drive.google.com/file/d/1tJih0IecAmP3IlP6TYvDjy3kOpIbMUIH/view?usp=sharing). 
+
+# Training
+
+The training script is [here](https://github.com/majumderb/compac/blob/master/models/reinforce_model/train.py). Please download the data (mainly COMET expansions) before training. The training may require 4 2080Tis or higher.
 
 # Citation
 If you find `compac` useful for your research, please cite our paper:
